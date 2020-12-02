@@ -256,7 +256,7 @@
                 android:id="@+id/humanMeld"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:orientation="vertical" />
+                android:orientation="horizontal" />
         </HorizontalScrollView>
 
         <HorizontalScrollView
@@ -282,6 +282,13 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Make Meld" />
+
+                <Button
+                    android:id="@+id/drawButton"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Draw" />
 
                 <Button
                     android:id="@+id/saveButton"

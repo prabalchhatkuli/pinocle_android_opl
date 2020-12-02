@@ -95,6 +95,15 @@ public class GameActivity extends AppCompatActivity {
             }
         });
 
+        //draw button
+        Button drawButton = findViewById(R.id.drawButton);
+        drawButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                game.drawRoundCards();
+            }
+        });
+
         //Get help Button
         Button helpButton = findViewById(R.id.helpButton);
 
@@ -117,6 +126,8 @@ public class GameActivity extends AppCompatActivity {
         LinearLayout computerCapture = findViewById(R.id.computerCapture);
         LinearLayout deskLayout = findViewById(R.id.deskLayout);
         Button meldButton = findViewById(R.id.meldButton);
+        Button drawButton = findViewById(R.id.drawButton);
+        Button moveButton = findViewById(R.id.moveButton);
 
         //clear layouts
         humanHand.removeAllViews();
@@ -136,12 +147,16 @@ public class GameActivity extends AppCompatActivity {
         if(moveOrMeld)
         {
             numberOfCards=1;
-            meldButton.setEnabled(false);
+            meldButton.setVisibility(View.GONE);
+            drawButton.setVisibility(View.GONE);
+            moveButton.setVisibility(View.VISIBLE);
         }
         else
         {
             numberOfCards=5;
-            meldButton.setEnabled(true);
+            meldButton.setVisibility(View.VISIBLE);
+            drawButton.setVisibility(View.VISIBLE);
+            moveButton.setVisibility(View.GONE);
         }
 
         //clear view variables
@@ -193,8 +208,6 @@ public class GameActivity extends AppCompatActivity {
 
     public void addCardsToView( ArrayList<Card> cardsToAdd, LinearLayout viewToAdd)
     {
-        System.out.println("here is the array");
-        System.out.println(cardsToAdd.size());
         for(final Card singleCard: cardsToAdd)
         {
             final ImageView cardImage = new ImageView(this);
@@ -253,7 +266,6 @@ public class GameActivity extends AppCompatActivity {
                        selectedCard.add(singleCard.getCardID());
                    }
                    int selectedHandCard = cardImage.getId();
-                   System.out.println("card has been selected"+selectedHandCard);
                }
            });
 

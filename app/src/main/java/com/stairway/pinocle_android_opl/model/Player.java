@@ -150,4 +150,45 @@ public class Player {
     public ArrayList<Card> getPlayedCards() {
         return playedCards;
     }
+
+    public void addMeldScore(int possibleMeld) {
+        this.playerRoundScore+=MELD_POINTS.get(possibleMeld);
+    }
+
+    public void removeCardsFromHand(ArrayList<Card> cardsFromHand) {
+        for(Card card: cardsFromHand) {
+            for (int i = playerHand.size() - 1; i >= 0; i--) {
+                if (playerHand.get(i).getCardID() == card.getCardID()) {
+                    playerHand.remove(i);
+                }
+            }
+        }
+    }
+
+    public void addNewMeldCards(final int possibleMeld, ArrayList<Card> cardsFromHand) {
+        for(Card card : cardsFromHand)
+        {
+            System.out.println(card.getCardFace()+card.getCardSuit());
+            System.out.println("was processed");
+            //add to meld pile
+            meldPile.add(card);
+
+            //add to card to meld map
+            cardToMeldMap.put(card, new ArrayList<Integer>(){{add(possibleMeld);}});
+
+        }
+
+        System.out.println(meldPile.size());
+    }
+
+    public void updateMeldCards(int possibleMeld, ArrayList<Card> cardsFromMeld) {
+        for(Card card: cardsFromMeld)
+        {
+            cardToMeldMap.get(card).add(possibleMeld);
+        }
+    }
+
+    public void addToMeldToCardMap(int possibleMeld, ArrayList<Card> mergedCards) {
+        meldToCardMap.put(possibleMeld, mergedCards);
+    }
 }

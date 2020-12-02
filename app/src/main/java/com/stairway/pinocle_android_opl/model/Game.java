@@ -57,4 +57,8 @@ public class Game {
     public void makeMeld(ArrayList<Integer> selectedCard) {
         currentRound.makeMeld(selectedCard);
     }
+
+    public void drawRoundCards() {
+        currentRound.drawCards();
+    }
 }

@@ -189,9 +189,28 @@ public class Round {
             mergedCards.addAll(cardsFromMeld);
             mergedCards.addAll(cardsFromHand);
             int possibleMeld = evaluateMeld(mergedCards);
+            //move the cards to the meld Pile;
+            if(possibleMeld != 0)
+            {
+                //update score
+                listOfPlayers.get(nextTurn).addMeldScore(possibleMeld);
+
+                //for cards from hand move hand cards from hand pile to meld
+                listOfPlayers.get(nextTurn).removeCardsFromHand(cardsFromHand);
+                listOfPlayers.get(nextTurn).addNewMeldCards(possibleMeld, cardsFromHand);
+
+                //update meld pile cards for the new meld
+                listOfPlayers.get(nextTurn).updateMeldCards(possibleMeld, cardsFromMeld);
+
+                //update the meldToCard map for the user
+                listOfPlayers.get(nextTurn).addToMeldToCardMap(possibleMeld, mergedCards);
+
+
+                System.out.println("possible meld is " + (possibleMeld));
+            }
+
             return;
         }
-
     }
 
     private int evaluateMeld(ArrayList<Card> mergedCards) {
@@ -329,7 +348,7 @@ public class Round {
             for (Card card: mergedCards)
             {
                 //find the meld cards
-                ArrayList<Integer> meldsOfCard = cardToMeldMap.get(card);
+                ArrayList<Integer> meldsOfCard = listOfPlayers.get(nextTurn).cardToMeldMap.get(card);
 
                 //if card is found in cardToMeldMap
                 if (meldsOfCard != null)
@@ -353,5 +372,10 @@ public class Round {
         {
             return possibleMeld;
         }
+    }
+
+    public void drawCards() {
+        dealCardsFromDeck(listOfPlayers.get(nextTurn), 1);
+        dealCardsFromDeck(listOfPlayers.get((nextTurn==0)?1:0), 1);
     }
 }

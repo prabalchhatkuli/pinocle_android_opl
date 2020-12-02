@@ -45,14 +45,12 @@ public class Deck {
 
     public void displayDeck()
     {
-        System.out.println("here:");
         for (int i=0; i<listOfCards.size(); i++)
         {
             System.out.print( listOfCards.get(i).getCardFace());
             System.out.print( listOfCards.get(i).getCardSuit());
             System.out.print( " | ");
         }
-        System.out.println("");
     }
 
     public Card dealCard()
