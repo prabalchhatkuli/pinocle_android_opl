@@ -61,4 +61,12 @@ public class Game {
     public void drawRoundCards() {
         currentRound.drawCards();
     }
+
+    public void decideMeld() {
+        currentRound.letPlayerMakeMeld();
+    }
+
+    public void getPlayerMove() {
+        currentRound.getPlayerMove();
+    }
 }

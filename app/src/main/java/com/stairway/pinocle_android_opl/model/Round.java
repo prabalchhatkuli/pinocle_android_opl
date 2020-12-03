@@ -21,7 +21,6 @@ public class Round {
         moveOrMeld =true;
     }
 
-
     public void startRound(ArrayList<Player> listOfPlayers, int winnerLastRound) {
         this.listOfPlayers = listOfPlayers;
 
@@ -46,10 +45,16 @@ public class Round {
         //temporary variable declarations
         Card tempCard;
 
-        for ( int i = 0; i < numberOfDraws; i++)
+        for ( int i = 0; i < numberOfDraws && roundDeck.getDeckSize() > 0; i++)
         {
             tempCard = roundDeck.dealCard();
             player.addToHand(tempCard);
+        }
+
+        if(roundDeck.getDeckSize() == 0 && trumpCard.getCardID()!=0 && numberOfDraws == 1)
+        {
+            player.addToHand(trumpCard);
+            trumpCard = new Card('0', trumpCard.getCardSuit(), 0);
         }
     }
 
@@ -179,19 +184,15 @@ public class Round {
         }
 
         ArrayList<Card> mergedCards = new ArrayList<Card>();
+
         //if all of the chosen cards are from cardsfromMeld, then meld cannot happen
-        if(cardsFromMeld.size() ==  selectedCard.size())
-        {
-            return;
-        }
-        else
+        if(cardsFromMeld.size() !=  selectedCard.size())
         {
             mergedCards.addAll(cardsFromMeld);
             mergedCards.addAll(cardsFromHand);
             int possibleMeld = evaluateMeld(mergedCards);
             //move the cards to the meld Pile;
-            if(possibleMeld != 0)
-            {
+            if(possibleMeld != 0) {
                 //update score
                 listOfPlayers.get(nextTurn).addMeldScore(possibleMeld);
 
@@ -205,12 +206,14 @@ public class Round {
                 //update the meldToCard map for the user
                 listOfPlayers.get(nextTurn).addToMeldToCardMap(possibleMeld, mergedCards);
 
-
-                System.out.println("possible meld is " + (possibleMeld));
             }
-
-            return;
         }
+        moveOrMeld = true;
+        listOfPlayers.get(nextTurn).clearPlayedCards();
+
+        dealCardsFromDeck(listOfPlayers.get(nextTurn), 1);
+        dealCardsFromDeck(listOfPlayers.get((nextTurn==0)?1:0), 1);
+        return;
     }
 
     private int evaluateMeld(ArrayList<Card> mergedCards) {
@@ -375,7 +378,29 @@ public class Round {
     }
 
     public void drawCards() {
+        moveOrMeld =true;
         dealCardsFromDeck(listOfPlayers.get(nextTurn), 1);
         dealCardsFromDeck(listOfPlayers.get((nextTurn==0)?1:0), 1);
     }
+
+    public void letPlayerMakeMeld() {
+        listOfPlayers.get(nextTurn).decideMeld(trumpCard);
+    }
+
+    public void getPlayerMove() {
+        if (listOfPlayers.get((nextTurn==0?1:0)).playedCards.size() == 0) {
+            Card x = listOfPlayers.get(nextTurn).getTacticalCard(trumpCard);
+            System.out.println("The card that should be chosen is:");
+            System.out.println(x.getCardFace()+" "+x.getCardSuit());
+        }
+        else
+        {
+            Card x = listOfPlayers.get(nextTurn).getCheapestCard(listOfPlayers.get((nextTurn==0?1:0)).playedCards.get(0),trumpCard);
+            System.out.println("The card that should be chosen is:");
+            System.out.println(x.getCardFace()+" "+x.getCardSuit());
+        }
+
+    }
+
+
 }

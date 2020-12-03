@@ -101,11 +101,25 @@ public class GameActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 game.drawRoundCards();
+                refreshView();
             }
         });
 
         //Get help Button
         Button helpButton = findViewById(R.id.helpButton);
+        helpButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(moveOrMeld)
+                {
+                    game.getPlayerMove();
+                }
+                else
+                {
+                    game.decideMeld();
+                }
+            }
+        });
 
         //save game button
         Button saveButton = findViewById(R.id.saveButton);

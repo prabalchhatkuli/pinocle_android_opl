@@ -9,7 +9,7 @@ public class Card {
     public Card()
     {
         cardFace = 0;
-        cardSuit = '-';
+        cardSuit = '0';
         cardPoints = 0;
         cardID = 0;
     }
