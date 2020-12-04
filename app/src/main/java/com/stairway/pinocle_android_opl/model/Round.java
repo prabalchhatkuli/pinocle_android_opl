@@ -12,9 +12,9 @@ public class Round {
     private boolean isTurnComplete;
     private boolean moveOrMeld;
 
-    public Round()
+    public Round(int winnerLastRound)
     {
-        nextTurn = 0;
+        nextTurn = winnerLastRound;
         remainingTurns = 0;
         roundDeck = new Deck();
         isTurnComplete = true;
@@ -23,6 +23,7 @@ public class Round {
 
     public void startRound(ArrayList<Player> listOfPlayers, int winnerLastRound) {
         this.listOfPlayers = listOfPlayers;
+        this.nextTurn = winnerLastRound;
 
         roundDeck.shuffleDeck();
 
@@ -118,10 +119,14 @@ public class Round {
 
         nextTurn = (nextTurn == 0)?1:0;
 
+        //process played cards, in meld maps, and collections
+        listOfPlayers.get(nextTurn).processPlayedCards();
+
         if(isTurnComplete)
         {
             nextTurn = processMoves();
             processTurnWin();
+
             return;
         }
     }
@@ -136,7 +141,6 @@ public class Round {
         listOfPlayers.get(nextTurn).addToRoundScore(listOfPlayers.get((0 == nextTurn) ? 1 : 0).playedCards.get(0).getCardPoints());
 
         //process played cards, in meld maps, and collections
-
 
         //clear turn collections like played cards
         listOfPlayers.get(nextTurn).playedCards.clear();
@@ -403,4 +407,7 @@ public class Round {
     }
 
 
+    public String serialize() {
+        return "hello save file here";
+    }
 }

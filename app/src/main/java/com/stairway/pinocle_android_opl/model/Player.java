@@ -25,7 +25,7 @@ public class Player {
     private static final Map<Integer, Integer> MELD_POINTS;
 
     //variable to store the melds and corresponding cards for those melds
-    protected Map<Integer, ArrayList<Card>> meldToCardMap;
+    protected Map<Integer, ArrayList<ArrayList<Card>>> meldToCardMap;
 
     //variable to store the cards and its corresponding list of melds
     protected Map<Card, ArrayList<Integer>> cardToMeldMap;
@@ -70,7 +70,7 @@ public class Player {
         capturePile =new ArrayList<Card>();
         meldPile=new ArrayList<Card>();
         playedCards = new ArrayList<Card>();
-        meldToCardMap = new HashMap<Integer, ArrayList<Card>>();
+        meldToCardMap = new HashMap<Integer, ArrayList<ArrayList<Card>>>();
         cardToMeldMap = new HashMap<Card, ArrayList<Integer>>();
         listOfPossibleMelds = new ArrayList<>();
     }
@@ -190,8 +190,19 @@ public class Player {
         }
     }
 
-    public void addToMeldToCardMap(int possibleMeld, ArrayList<Card> mergedCards) {
-        meldToCardMap.put(possibleMeld, mergedCards);
+    public void addToMeldToCardMap(int possibleMeld, final ArrayList<Card> mergedCards) {
+
+        //search for the possible meld in the meldToCardMap
+        //if exists add to the arrayList
+        if(meldToCardMap.containsKey(possibleMeld))
+        {
+            meldToCardMap.get(possibleMeld).add(mergedCards);
+        }
+        //else, create a new entry
+        else
+        {
+            meldToCardMap.put(possibleMeld, new ArrayList<ArrayList<Card>>(){{add(mergedCards);}});
+        }
     }
 
     /*Computer and hint strategies*/
@@ -679,5 +690,17 @@ public class Player {
         {
             return false;
         }
+    }
+
+    public Map getMeldToCardMap() {
+        return meldToCardMap;
+    }
+
+    public Map getCardToMeldMap() {
+        return cardToMeldMap;
+    }
+
+    public void processPlayedCards() {
+        
     }
 }

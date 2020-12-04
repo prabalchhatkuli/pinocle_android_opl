@@ -2,6 +2,7 @@ package com.stairway.pinocle_android_opl.view;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -19,7 +20,10 @@ import com.stairway.pinocle_android_opl.model.Game;
 import com.stairway.pinocle_android_opl.model.Player;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
 
 public class GameActivity extends AppCompatActivity {
 
@@ -38,6 +42,8 @@ public class GameActivity extends AppCompatActivity {
 
         Intent intent =  getIntent();
         String gameType = intent.getExtras().getString("type");
+        String startPlayer = intent.getExtras().getString("turn");
+
         moveOrMeld = true;
         isChasePlayer =false;
 
@@ -51,7 +57,8 @@ public class GameActivity extends AppCompatActivity {
         numberOfCards = 1;
         playerTurn = 0;
 
-        game = new Game();
+        game = new Game((startPlayer.equals("human"))?0:1);
+
         game.startGame();
 
         selectedCard = new ArrayList<>();
@@ -123,6 +130,12 @@ public class GameActivity extends AppCompatActivity {
 
         //save game button
         Button saveButton = findViewById(R.id.saveButton);
+        helpButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                game.saveState();
+            }
+        });
 
 
         //quit game button
@@ -181,13 +194,18 @@ public class GameActivity extends AppCompatActivity {
             if(each.getPlayerName() == "Human")
             {
                 addCardsToClickableView(each.getPlayerHand(), humanHand);
-                addCardsToClickableView(each.getMeldPile(), humanMeld);
+                //update meld cards
+                addCardsToMeldView(each, humanMeld);
+                System.out.println("Size of meld of human is");
+                System.out.println(each.getMeldPile().size());
                 addCardsToView(each.getCapturePile(), humanCapture);
             }
             else
             {
                 addCardsToClickableView(each.getPlayerHand(), computerHand);
-                addCardsToClickableView(each.getMeldPile(), computerMeld);
+                addCardsToMeldView(each, computerMeld);
+                System.out.println("Size of meld of computer is");
+                System.out.println(each.getMeldPile().size());
                 addCardsToView(each.getCapturePile(), computerCapture);
             }
 
@@ -214,6 +232,108 @@ public class GameActivity extends AppCompatActivity {
 
         humanScore.setText(Integer.toString(game.getListOfPlayers().get(0).getPlayerGameScore()) +"/"+Integer.toString(game.getListOfPlayers().get(0).getPlayerRoundScore()) );
         computerScore.setText(Integer.toString(game.getListOfPlayers().get(1).getPlayerGameScore()) +"/"+Integer.toString(game.getListOfPlayers().get(1).getPlayerRoundScore()) );
+    }
+
+    @SuppressLint("ResourceType")
+    private void addCardsToMeldView(Player each, LinearLayout meldView) {
+        Map<Card, ArrayList<Integer>> mp = each.getMeldToCardMap();
+        System.out.println("Size of meld to card map of human is");
+        System.out.println(each.getMeldToCardMap().size());
+        Iterator it = mp.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry im = (Map.Entry)it.next();
+
+            ArrayList<ArrayList<Card>> tempVectorOfAMeld= (ArrayList<ArrayList<Card>>) im.getValue();
+
+            if (0 == tempVectorOfAMeld.size()) {
+                continue;
+            }
+
+            Integer currentMeld = (Integer) im.getKey();
+
+            for ( int i = 0; i < tempVectorOfAMeld.size(); i++)
+            {
+                final ArrayList<Card> vectorWithinVector = tempVectorOfAMeld.get(i);
+
+                for ( int j = 0; j < vectorWithinVector.size(); j++)
+                {
+                    //append the card to the output string
+                    //vectorWithinVector[j] is the card
+                    String meldString = new String();
+                    meldString += vectorWithinVector.get(j).getCardFace();
+                    meldString += vectorWithinVector.get(j).getCardSuit();
+
+                    final int index = j;
+                    addCardsToClickableView(new ArrayList<Card>(){{add(vectorWithinVector.get(index));}}, meldView);
+                    //check if an asterisk is required
+                    //flag to see if the card was used in another active meld
+                    Boolean isFound = false;
+
+                    //go to the card index in card to meld map
+                    ArrayList<Integer> meldsForACard = (ArrayList<Integer>) each.getCardToMeldMap().get(vectorWithinVector.get(j));
+
+                    //for each meld mentioned for the card
+                    for ( int k = 0; k < meldsForACard.size(); k++)
+                    {
+                        //go to the meld to see if another meld with the card is still active
+                        if (currentMeld == meldsForACard.get(k)) {
+                            continue;
+                        } else
+                        {
+                            //collection of vectors for this meld
+                            ArrayList<ArrayList<Card>> tempCheckMeldCollection = (ArrayList<ArrayList<Card>>) each.getMeldToCardMap().get(meldsForACard.get(k));
+
+                            //for the vector of melds hence received
+                            for ( int l = 0; l < tempCheckMeldCollection.size(); l++)
+                            {
+                                //if the card is found an asterisk is required, break off the program, go to the next card
+                                if (tempCheckMeldCollection.contains(vectorWithinVector.get(j)))
+                                {
+                                    meldString += '*';
+                                    final ImageView starImage = new ImageView(this);
+                                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(180, 190);
+                                    params.setMargins(15, 0, -30, 0);
+                                    starImage.setLayoutParams(params);
+                                    Context context = meldView.getContext();
+                                    int id = context.getResources().getIdentifier("star", "drawable", context.getPackageName());
+
+                                    starImage.setImageResource(id);
+
+                                    starImage.setId(i);
+                                    starImage.setClickable(true);
+
+                                    meldView.addView(starImage);
+
+                                    isFound = true;
+                                    break;
+                                }
+                            }
+                            if (isFound)
+                                break;
+                        }
+                    }
+                }
+            }
+
+            //line separating melds
+            final ImageView lineImage = new ImageView(this);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(180, 190);
+            params.setMargins(15, 0, -30, 0);
+            lineImage.setLayoutParams(params);
+            Context context = meldView.getContext();
+            int id = context.getResources().getIdentifier("line", "drawable", context.getPackageName());
+
+            lineImage.setImageResource(id);
+
+            lineImage.setId(22);
+            lineImage.setClickable(true);
+
+            meldView.addView(lineImage);
+
+            //it.remove(); // avoids a ConcurrentModificationException
+        }
+        System.out.println("After processing Size of meld to card map of human is");
+        System.out.println(each.getMeldToCardMap().size());
     }
 
     public void makeToast(String tst) {
