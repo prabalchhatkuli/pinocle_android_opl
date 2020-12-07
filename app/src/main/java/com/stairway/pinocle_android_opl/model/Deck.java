@@ -16,7 +16,7 @@ public class Deck {
     public Deck()
     {
         //counter for card ID
-        int cardID = 0;
+        int cardID = 1;
 
         listOfCards = new ArrayList<Card>();
         //initializing the list of cards
@@ -77,5 +77,10 @@ public class Deck {
 
     public ArrayList<Card> getCards() {
         return listOfCards;
+    }
+
+    public void setDeck(ArrayList<Card> vectorOfCards) {
+        listOfCards.clear();
+        listOfCards.addAll(vectorOfCards);
     }
 }

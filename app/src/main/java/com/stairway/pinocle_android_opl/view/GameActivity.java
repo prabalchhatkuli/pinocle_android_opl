@@ -42,24 +42,29 @@ public class GameActivity extends AppCompatActivity {
 
         Intent intent =  getIntent();
         String gameType = intent.getExtras().getString("type");
-        String startPlayer = intent.getExtras().getString("turn");
+        String startPlayer;
+        String filename;
+
 
         moveOrMeld = true;
         isChasePlayer =false;
 
-        Context context = getApplicationContext();
-        CharSequence text = gameType + " game started.";
-        int duration = Toast.LENGTH_SHORT;
-
-        Toast toast = Toast.makeText(context, text, duration);
-        toast.show();
-
         numberOfCards = 1;
         playerTurn = 0;
 
-        game = new Game((startPlayer.equals("human"))?0:1);
 
-        game.startGame();
+        if(gameType.equals("new")) {
+            startPlayer = intent.getExtras().getString("turn");
+            game = new Game((startPlayer.equals("human"))?0:1);
+            game.startGame();
+        }
+        else
+        {
+            filename = intent.getExtras().getString("file");
+            game = new Game(0);
+            game.loadGame(filename);
+        }
+
 
         selectedCard = new ArrayList<>();
 
@@ -73,12 +78,16 @@ public class GameActivity extends AppCompatActivity {
         moveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (selectedCard.isEmpty()) {
+                if (game.getListOfPlayers().get(game.getNextPlayer()).getPlayerName().equals("Human") && selectedCard.isEmpty()) {
                     makeToast("You have not selected a card yet.");
+                }
+                else if(game.getListOfPlayers().get(game.getNextPlayer()).getPlayerName().equals("Computer"))
+                {
+                    game.play(1111);
+                    refreshView();
                 }
                 else {
                     game.play(selectedCard.get(0));
-
                     //refresh
                     refreshView();
                 }
@@ -130,7 +139,7 @@ public class GameActivity extends AppCompatActivity {
 
         //save game button
         Button saveButton = findViewById(R.id.saveButton);
-        helpButton.setOnClickListener(new View.OnClickListener() {
+        saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 game.saveState();
@@ -140,6 +149,12 @@ public class GameActivity extends AppCompatActivity {
 
         //quit game button
         Button quitButton = findViewById(R.id.quitButton);
+        quitButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                game.saveState();
+            }
+        });
     }
 
     public void refreshView()
@@ -155,6 +170,8 @@ public class GameActivity extends AppCompatActivity {
         Button meldButton = findViewById(R.id.meldButton);
         Button drawButton = findViewById(R.id.drawButton);
         Button moveButton = findViewById(R.id.moveButton);
+        Button saveButton = findViewById(R.id.saveButton);
+        Button helpButton = findViewById(R.id.helpButton);
 
         //clear layouts
         humanHand.removeAllViews();
@@ -171,6 +188,7 @@ public class GameActivity extends AppCompatActivity {
         playerTurn = game.getNextPlayer();
         moveOrMeld = game.getMoveOrMeld();
 
+        //move and meld display buttons.
         if(moveOrMeld)
         {
             numberOfCards=1;
@@ -184,6 +202,17 @@ public class GameActivity extends AppCompatActivity {
             meldButton.setVisibility(View.VISIBLE);
             drawButton.setVisibility(View.VISIBLE);
             moveButton.setVisibility(View.GONE);
+        }
+
+        //for lead player display the save button
+        Boolean isTurnOfLead = game.getIfTurnOfLead();
+        if(isTurnOfLead)
+        {
+            saveButton.setVisibility(View.VISIBLE);
+        }
+        else
+        {
+            saveButton.setVisibility(View.GONE);
         }
 
         //clear view variables
@@ -226,10 +255,21 @@ public class GameActivity extends AppCompatActivity {
         TextView nextPlayerview = findViewById(R.id.nextPlayerTextView);
         nextPlayerview.setText("Next Player: "+game.getListOfPlayers().get(game.getNextPlayer()).getPlayerName());
 
+        if(game.getListOfPlayers().get(game.getNextPlayer()).getPlayerName().equals("Computer"))
+        {
+            helpButton.setVisibility(View.GONE);
+        }
+        else
+        {
+            helpButton.setVisibility(View.VISIBLE);
+        }
+
         //set the scores for each player
         TextView humanScore = findViewById(R.id.humanScoreView);
         TextView computerScore = findViewById(R.id.computerScoreView);
+        TextView roundNum = findViewById(R.id.roundView);
 
+        roundNum.setText("Round:"+Integer.toString(game.getRoundNumber()));
         humanScore.setText(Integer.toString(game.getListOfPlayers().get(0).getPlayerGameScore()) +"/"+Integer.toString(game.getListOfPlayers().get(0).getPlayerRoundScore()) );
         computerScore.setText(Integer.toString(game.getListOfPlayers().get(1).getPlayerGameScore()) +"/"+Integer.toString(game.getListOfPlayers().get(1).getPlayerRoundScore()) );
     }

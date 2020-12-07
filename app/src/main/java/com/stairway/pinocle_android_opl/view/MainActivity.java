@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
                 prompt.setTitle("Select Load Game file");
 
 
-                String fileDir = getFilesDir().getAbsolutePath() + "/";
+                String fileDir = Environment.getExternalStorageDirectory().getAbsolutePath() + "/pinochlesave";
                 File directory = new File(fileDir);
                 System.out.println(Environment.getExternalStorageState());
                 System.out.println(directory);
@@ -90,9 +90,9 @@ public class MainActivity extends AppCompatActivity {
 
                 for (File file : files ){
                     String name = file.getName();
-                    if (name.endsWith(".txt")){
+                    //if (name.endsWith(".txt")){
                         nameList.add(name);
-                    }
+                    //}
                 }
 
                 String [] items = new String[nameList.size()];
@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
                         ListView select = ((AlertDialog)dialog).getListView();
                         String fileName = (String) select.getAdapter().getItem(these);
                         Intent intent = new Intent(MainActivity.this, GameActivity.class);
-                        intent.putExtra("state", 2);
+                        intent.putExtra("type", "load");
                         intent.putExtra("file", fileName);
                         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         startActivity(intent);

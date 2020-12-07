@@ -6,9 +6,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
-public class Player {
+public abstract class Player {
 
     protected String playerName;
     protected ArrayList<Card> playerHand;
@@ -113,11 +114,15 @@ public class Player {
         capturePile.add(card);
     }
 
+    abstract void makeMove(Integer cardID, ArrayList<Card> playedCards, Card trumpCard);
+
+    //abstract void makeMeld();
+
     public void play(Integer selectedCard) {
         //determine if the card is in the meld or the player cards
         boolean isInHandOrMeld = true;
         Card foundCard = null;
-        
+
         for(Card card: playerHand)
         {
             if(selectedCard == card.getCardID())
@@ -126,11 +131,10 @@ public class Player {
                 isInHandOrMeld = true;
                 foundCard = card;
                 //remove the card from the collection
-                playerHand.remove(card);
                 break;
             }
         }
-        
+
         for(Card card: meldPile)
         {
             if(selectedCard == card.getCardID())
@@ -139,7 +143,6 @@ public class Player {
                 isInHandOrMeld = false;
                 foundCard = card;
                 //remove the card from the collection
-                meldPile.remove(card);
                 break;
             }
         }
@@ -701,6 +704,264 @@ public class Player {
     }
 
     public void processPlayedCards() {
-        
+        //process played cards, hand, and meld cards,
+        //if the played card is in hand pile: 1)it can either be only part of a hand, 2) it can be part of a hand and an earlier meld
+        if (playerHand.contains(playedCards.get(0)))
+        {
+            //check if it is in the card to meld map as well
+            //if true remove from meld pile also
+            if (cardToMeldMap.containsKey(playedCards.get(0)))
+            {
+                cardToMeldMap.remove(playedCards.get(0));
+            }
+
+            //remove card from hand pile
+            playerHand.remove(playedCards.get(0));
+        }
+        else//else: the cards are in an active meld: in the meld pile and the cardToMeldMap
+        {
+            //find the card entry in cardToMeldMap, im is the list of melds for the card
+            ArrayList<Integer> im = cardToMeldMap.get(playedCards.get(0));
+
+            //for each of the card's meld
+            for (int i = 0; i < im.size(); i++)
+            {
+                //temporary variable which stores the current meld for the chosen card
+                Integer tempMeld = im.get(i);
+
+                //Among the vectors in the entry in meldToCardMap, find the one in which this card has been used
+                for (int j = 0; j < meldToCardMap.get(tempMeld).size(); j++)
+                {
+
+                    //iv is the iterator to the found vector
+                    if (((meldToCardMap.get(tempMeld)).get(j)).contains(playedCards.get(0)))
+                    {
+                        //for all other cards in this vector: we need to decide whether to send them to the hand or not
+                        for (int k = 0; k < ((meldToCardMap.get(tempMeld)).get(j)).size(); k++)
+                        {
+                            //if same card, continue
+                            if(playedCards.get(0).getCardID() == ((meldToCardMap.get(tempMeld)).get(j).get(k)).getCardID())
+                            {
+                                continue;
+                            }
+                            //find it in the cardToMeldMap
+                            ArrayList<Integer> meldCheckIterator = cardToMeldMap.get((meldToCardMap.get(tempMeld).get(j).get(k)));
+
+                            //flag to see if variable found
+                            Boolean isfound = false;
+
+                            //go to each of the mentioned meld to find the card
+                            for (int l = 0; l < meldCheckIterator.size(); l++)
+                            {
+                                //temporary variable for checking if the meld exists in the map
+                                Integer tempCheckMeld = meldCheckIterator.get(l);
+
+                                //if the checkmeld is the same as parent meld, continue, because we are going to remove from this
+                                if (tempCheckMeld.equals(tempMeld)) continue;
+
+                                for (int m = 0; m < meldToCardMap.get(tempCheckMeld).size(); m++)
+                                {
+                                    //if found:
+                                    if (((meldToCardMap.get(tempCheckMeld).get(m)).contains((meldToCardMap.get(tempMeld)).get(j).get(k))))
+                                    {
+                                        //only erase the original vector from the original meld entry in meldToCard map
+                                        //no need to send the to player's hand
+                                        isfound = true;
+                                        break;
+                                    }
+                                }
+
+                                if (isfound)
+                                {
+                                    break;
+                                }
+                            }
+                            //if the card is not found in any of the listed meld, it means that the melds are no longer active
+                            //send the card to the user's hand
+                            if (!isfound)
+                            {
+                                addToHand((meldToCardMap.get(tempMeld)).get(j).get(k));
+                                //find in meld pile
+                                //remove from meld pile
+                                if (meldPile.contains((meldToCardMap.get(tempMeld)).get(j).get(k)))
+                                    meldPile.remove((meldToCardMap.get(tempMeld)).get(j).get(k));
+                                else
+                                    System.out.println("Error!! not found in the pile");
+                            }
+                            //else do nothing
+                        }
+                        //erase the vector containing iv from meldtoCardMap ((meldToCardMap[tempMeld])[j])
+                        ((meldToCardMap.get(tempMeld))).remove(j);
+                    }
+                }
+            }
+
+            //erase from cardToMeld map
+            cardToMeldMap.remove(playedCards.get(0));
+
+            //erase from meldpile
+            if (meldPile.contains(playedCards.get(0)))
+            {
+                meldPile.remove(playedCards.get(0));
+            }
+            else
+                System.out.println("error in deleting the chosen card");
+        }
+
+    }
+
+    public void setPlayerScores(int game, int round) {
+        playerGameScore = game;
+        playerRoundScore = round;
+    }
+
+    public void setPlayerHand(String[] cards) {
+        //vector to store the card objects
+        ArrayList<Card> vectorOfCards = new ArrayList<>();
+
+        //for each card in the string create a card object and insert in the player's hand
+        for (int i = 0; i < cards.length; i++)
+        {
+            vectorOfCards.add(new Card(cards[i].charAt(0), cards[i].charAt(1)));
+        }
+
+        //set the card to player hand
+        playerHand.clear();
+        playerHand.addAll(vectorOfCards);
+    }
+
+    public void setCapturePile(String[] cards) {
+
+        ArrayList<Card> vectorOfCards = new ArrayList<>();
+
+        //for each card in the string create a card object and insert in the player's hand
+        for (int i = 0; i < cards.length; i++)
+        {
+            vectorOfCards.add(new Card(cards[i].charAt(0), cards[i].charAt(1)));
+        }
+
+        //set the card to player hand
+        capturePile.clear();
+        capturePile.addAll(vectorOfCards);
+    }
+
+    public void setMeldPile(ArrayList<ArrayList<String>> meldCards, Card trumpCard) {
+
+        //variable to act as a buffer for repeated meld cards (i.e. with *)
+        Map<Card, ArrayList<Integer>> cardToMeldMapBuffer =  new HashMap<>();
+
+        //variable to store the current Meld
+        Integer currentMeld;
+
+        for (int i = 0; i != meldCards.size(); i++)
+        {
+            ArrayList<Card> mergedCards = new ArrayList<>();
+            //insert from meldCards to played cards by creating new cards
+            for (int j=0; j<meldCards.get(i).size(); j++)
+            {
+                mergedCards.add(new Card(meldCards.get(i).get(j).charAt(0), meldCards.get(i).get(j).charAt(1)));
+            }
+
+            //evaluate the meld with these cards
+            currentMeld = evaluateMeld(mergedCards, trumpCard);
+
+            //reset the played cards because we don't need it from now
+            mergedCards.clear();
+
+            //variable to store the cards in the current Meld currently being evaluated
+            final ArrayList<Card> currentMeldCards = new ArrayList<>();
+
+            //for each of the cards in the meldsCards, evaluate the meld and insert in the respective member maps
+            for (int j = 0; j < meldCards.get(i).size(); j++)
+            {
+                //variable to store the card
+                Card chosenCard = null;
+
+                //if the card is being shared with another meld, it has an asterisk
+                if (3 == meldCards.get(i).get(j).length() && '*' == meldCards.get(i).get(j).charAt(2))
+                {
+                    //find a card in the cardToMeldBuffer which does not have the "currentMeld" in it
+                    ArrayList<Card> possibleCard= new ArrayList<>();
+
+                    Iterator it = cardToMeldMapBuffer.entrySet().iterator();
+                    while (it.hasNext())
+                    {
+                        Map.Entry im = (Map.Entry)it.next();
+                        if ( ((Card)im.getKey()).getCardSuit() == meldCards.get(i).get(j).charAt(1) && ((Card)im.getKey()).getCardFace() == meldCards.get(i).get(j).charAt(0))
+                        {
+                            if(((ArrayList<Integer>)im.getValue()).contains(currentMeld))
+                            {
+                                possibleCard.add((Card) im.getKey());
+                            }
+                        }
+                    }
+
+                    //for each of the possible cards, find out which one has only one meld
+                    //if such card is found, choose this card
+                    //otherwise add to the first card in the list
+
+                    Boolean isCardFound = false;
+
+                    for (int k = 0; k < possibleCard.size(); k++)
+                    {
+                        if ((cardToMeldMapBuffer.get(possibleCard.get(i)).size() == 1))
+                        {
+                            chosenCard = possibleCard.get(i);
+                            isCardFound = true;
+                            break;
+                        }
+                    }
+
+                    //if a card was found
+                    if (isCardFound)
+                    {
+                        cardToMeldMapBuffer.get(chosenCard).add(currentMeld);
+                    }
+                    //if a card was not found and there was no similar card in the buffer map
+                    else if(!isCardFound && 0 == possibleCard.size())
+                    {
+                        chosenCard = new Card(meldCards.get(i).get(j).charAt(0), meldCards.get(i).get(j).charAt(1));
+                        //insert into the buffer
+                        final Integer tempMeld = currentMeld;
+                        cardToMeldMapBuffer.put(chosenCard,new ArrayList<Integer>(){{add(tempMeld);}});
+                        //insert into the meld list
+                        meldPile.add(chosenCard);
+                    }
+                    else // possible card was found, and there were no cards with a only a single Meld
+                    {
+                        (cardToMeldMapBuffer.get(possibleCard.get(0))).add(currentMeld);
+                    }
+                }
+                else// it is not being shared with another meld
+                {
+                    //no need to insert in the buffer, directly insert to the main map
+                    chosenCard = new Card(meldCards.get(i).get(j).charAt(0), meldCards.get(i).get(j).charAt(1));
+
+                    final Integer tempMeld = currentMeld;
+                    cardToMeldMap.put(chosenCard, new ArrayList<Integer>(){{add(tempMeld);}});
+
+                    //insert to the meld pile
+                    meldPile.add(chosenCard);
+                }
+
+                //add the chosen card to the vector of cards for the current meld
+                currentMeldCards.add(chosenCard);
+            }
+
+            //add to an entry for the meldToCard map
+            //if the current meld already exists in the meldToCardMap, push the meld vector
+            if (meldToCardMap.containsKey(currentMeld))
+            {
+                meldToCardMap.get(currentMeld).add(currentMeldCards);
+            }
+            //else, create a new entry
+            else
+            {
+                meldToCardMap.put(currentMeld, new ArrayList<ArrayList<Card>>(){{add(currentMeldCards);}});
+            }
+        }
+
+        //finally merge the buffer into the main cardToMeldMap
+        cardToMeldMap.putAll(cardToMeldMapBuffer);
     }
 }

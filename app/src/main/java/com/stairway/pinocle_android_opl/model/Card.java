@@ -5,10 +5,11 @@ public class Card {
     private char cardSuit;
     private int cardPoints;
     private int cardID;
+    private static int cardIDCounter=0;
 
     public Card()
     {
-        cardFace = 0;
+        cardFace = '0';
         cardSuit = '0';
         cardPoints = 0;
         cardID = 0;
@@ -38,6 +39,37 @@ public class Card {
                     cardPoints =0;
                 break;
         }
+    }
+
+    public Card(char cardFace, char cardSuit)
+    {
+        //initialize member variables
+        this.cardFace = cardFace;
+        this.cardSuit = cardSuit;
+        this.cardID = cardIDCounter;
+        incrementCardCounter();
+
+        //note that:: the cards can only be of the faces mentioned in the cases below
+        switch (cardFace)
+        {
+            case 'J': cardPoints = 2;
+                break;
+            case 'Q': cardPoints = 3;
+                break;
+            case 'K': cardPoints = 4;
+                break;
+            case 'X': cardPoints = 10;
+                break;
+            case 'A': cardPoints = 11;
+                break;
+            default:
+                cardPoints =0;
+                break;
+        }
+    }
+
+    private static void incrementCardCounter() {
+        cardIDCounter+=1;
     }
 
     public char getCardFace() { return this.cardFace; }

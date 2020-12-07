@@ -110,17 +110,17 @@ public class Round {
     }
 
     public void play(Integer cardID) {
-        listOfPlayers.get(nextTurn).play(cardID);
+        listOfPlayers.get(nextTurn).makeMove(cardID, listOfPlayers.get((nextTurn == 0)?1:0).getPlayedCards(),trumpCard);
 
         //only move is allowed, no meld
         moveOrMeld =true;
 
+        //process played cards, in meld maps, and collections
+        listOfPlayers.get(nextTurn).processPlayedCards();
+
         isTurnComplete = !isTurnComplete;
 
         nextTurn = (nextTurn == 0)?1:0;
-
-        //process played cards, in meld maps, and collections
-        listOfPlayers.get(nextTurn).processPlayedCards();
 
         if(isTurnComplete)
         {
@@ -409,5 +409,30 @@ public class Round {
 
     public String serialize() {
         return "hello save file here";
+    }
+
+    public void setTrumpCard(String card) {
+        if(card.length() == 2 )trumpCard = new Card(card.charAt(0), card.charAt(1));
+        else trumpCard = new Card('0', card.charAt(1));
+    }
+
+    public void setRoundDeck(String[] cards) {
+        //vector to store the card objects
+        ArrayList<Card> vectorOfCards = new ArrayList<>();
+
+        //for each card in the string create a card object and insert in the player's hand
+        for (int i = 0; i < cards.length; i++)
+        {
+            vectorOfCards.add(new Card(cards[i].charAt(0), cards[i].charAt(1)));
+        }
+
+        //set the deck with vectorOfCards
+        roundDeck.setDeck(vectorOfCards);
+
+    }
+
+    public void setNextTurn(String player) {
+        if (player.equals("Computer")) nextTurn = 1;
+        else nextTurn = 0;
     }
 }
