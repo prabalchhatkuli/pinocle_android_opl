@@ -327,11 +327,39 @@ public abstract class Player {
             //if any meld possible: add to the score for this list
             if (0 != possibleMeld)
             {
-                //the section of the code below is for storing the meld so that it can be used while the user want to call meld
-                listOfPossibleMelds.add(new Pair<ArrayList<Card>, Integer>(mergedCards, possibleMeld));
 
-                scoreForThisList[0] += MELD_POINTS.get(possibleMeld);
-                System.out.println(MELDS.get(possibleMeld));
+                // find all entries with possible meld in listofpossiblemeld
+                Iterator<Pair<ArrayList<Card>, Integer>> myIter = listOfPossibleMelds.iterator();
+
+                Boolean cardFound = false;
+
+                //for all entries
+                outerLoop:
+                for(Pair<ArrayList<Card>, Integer> singleMeld: listOfPossibleMelds)
+                {
+                    if(singleMeld.second.equals(possibleMeld)) {
+                        for (Card card : mergedCards) {
+                            for(Card setCard: singleMeld.first)
+                            {
+                                if(card.getCardID()==setCard.getCardID())
+                                {
+                                    cardFound =true;
+                                    break outerLoop;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //if none found do nothing
+                if(!cardFound)
+                {
+                    //the section of the code below is for storing the meld so that it can be used while the user want to call meld
+                    listOfPossibleMelds.add(new Pair<ArrayList<Card>, Integer>(mergedCards, possibleMeld));
+
+                    scoreForThisList[0] += MELD_POINTS.get(possibleMeld);
+                    System.out.println(MELDS.get(possibleMeld));
+                }
             }
 
             //clear "playedCards" variable
@@ -548,6 +576,7 @@ public abstract class Player {
 
         //iterate the vector
         //for each element(Card*): create another vector by removing that element from the overall vector
+        ArrayList<Pair<ArrayList<Card>, Integer>> tempListOfAllPossibleMelds = new ArrayList<>();
         for (int i = 0; i < listOfPlayableCards.size(); i++)
         {
             //temporary variable to store the list of cards when an element at index i is removed
@@ -556,7 +585,8 @@ public abstract class Player {
             tempListOfCards.remove(i);
 
             int possibleScore = findPossibleScores(tempListOfCards, trumpCard);
-
+            //tempListOfAllPossibleMelds.addAll(listOfPossibleMelds);
+            listOfPossibleMelds.clear();
             //add the score of removing this card
             meldScoreEachCard.add(possibleScore);
         }
@@ -651,6 +681,7 @@ public abstract class Player {
 
             int possibleScore = findPossibleScores(tempListOfCards, trumpCard);
 
+            listOfPossibleMelds.clear();
             //add the score of removing this card
             meldScoreEachCard.add(possibleScore);
         }
@@ -1055,5 +1086,9 @@ public abstract class Player {
         meldToCardMap.clear();
 
 
+    }
+
+    public int getTotalScore() {
+        return playerGameScore+playerRoundScore;
     }
 }

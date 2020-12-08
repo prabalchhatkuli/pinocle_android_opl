@@ -96,11 +96,11 @@ public class GameActivity extends AppCompatActivity {
                 }
                 else if(game.getListOfPlayers().get(game.getNextPlayer()).getPlayerName().equals("Computer"))
                 {
-                    game.play(1111);
+                    game.play(1111, listOfLogs);
                     refreshView();
                 }
                 else {
-                    game.play(selectedCard.get(0));
+                    game.play(selectedCard.get(0), listOfLogs);
                     //refresh
                     refreshView();
                 }
@@ -174,6 +174,25 @@ public class GameActivity extends AppCompatActivity {
                 game.saveState();
             }
         });
+
+        //log button
+        Button logButton = findViewById(R.id.logButton);
+        logButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final AlertDialog.Builder prompt = new AlertDialog.Builder(GameActivity.this);
+                prompt.setTitle("Game logs");
+                StringBuilder logs = new StringBuilder();
+                for(String s: listOfLogs)
+                {
+                    logs.append(s).append("\n");
+                }
+
+                prompt.setMessage(logs);
+
+                prompt.show();
+            }
+        });
     }
 
     public void refreshView()
@@ -202,7 +221,7 @@ public class GameActivity extends AppCompatActivity {
         computerCapture.removeAllViews();
         deskLayout.removeAllViews();
 
-        ArrayList<Player> listOfPlayer = game.getListOfPlayers();
+        final ArrayList<Player> listOfPlayer = game.getListOfPlayers();
 
         //get the next player and the player info
         playerTurn = game.getNextPlayer();
@@ -245,8 +264,7 @@ public class GameActivity extends AppCompatActivity {
                 addCardsToClickableView(each.getPlayerHand(), humanHand);
                 //update meld cards
                 addCardsToMeldView(each, humanMeld);
-                System.out.println("Size of meld of human is");
-                System.out.println(each.getMeldPile().size());
+
                 addCardsToView(each.getCapturePile(), humanCapture);
 
             }
@@ -254,17 +272,17 @@ public class GameActivity extends AppCompatActivity {
             {
                 addCardsToClickableView(each.getPlayerHand(), computerHand);
                 addCardsToMeldView(each, computerMeld);
-                System.out.println("Size of meld of computer is");
-                System.out.println(each.getMeldPile().size());
+
                 addCardsToView(each.getCapturePile(), computerCapture);
             }
 
             //for the desk
             addCardsToView(each.getPlayedCards(), deskLayout);
-            if(each.getPlayedCards().size()!=0)
-            {
-                listOfLogs.add(each.getPlayerName()+" chose "+ each.getPlayedCards().get(0).getCardFace()+each.getPlayedCards().get(0).getCardSuit());
-            }
+           // if(each.getPlayedCards().size()!=0)
+            //{
+            //    String tempLog = each.getPlayerName()+" chose "+ each.getPlayedCards().get(0).getCardFace()+each.getPlayedCards().get(0).getCardSuit()
+           //     if(listOfLogs.)
+           // }
         }
 
         //updating the deck of cards
@@ -304,23 +322,33 @@ public class GameActivity extends AppCompatActivity {
         //end of round prompt
         if((listOfPlayer.get(0).getCapturePile().size()+listOfPlayer.get(1).getCapturePile().size() == 48))
         {
-            String[] options = {"Yes, start another.", "No, quit the game."};
+            String[] options = {"","","Yes, start another.", "No, quit the game."};
 
             //display prompt
             final AlertDialog.Builder prompt = new AlertDialog.Builder(GameActivity.this);
 
             prompt.setTitle("End of Round: want to start another round?");
-
+            options[0] = ("Scores: Human|Computer"+listOfPlayer.get(0).getPlayerRoundScore()+"|"+listOfPlayer.get(1).getPlayerRoundScore());
+            options[1] = ("Next Round started by:"+listOfPlayer.get(game.getNextPlayer()).getPlayerName());
             prompt.setItems(options, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    if(which == 0)
+                    if(which == 2)
                     {
                         //reset game and update player game/round scores
                         game.resetGame();
                         listOfLogs.clear();
                         dialog.dismiss();
                         refreshView();
+                    }
+                    if(which==3)
+                    {
+                        //send an intent to a new activity
+                        Intent it = new Intent(GameActivity.this, endGame.class);
+                        it.putExtra("Human", Integer.toString(listOfPlayer.get(0).getTotalScore()));
+                        it.putExtra("Computer", Integer.toString(listOfPlayer.get(1).getTotalScore()));
+                        startActivity(it);
+
                     }
                 }
             });

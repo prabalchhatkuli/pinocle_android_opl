@@ -3,6 +3,8 @@ package com.stairway.pinocle_android_opl.model;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Round {
     private int remainingTurns, nextTurn;
@@ -11,6 +13,24 @@ public class Round {
     private ArrayList<Player> listOfPlayers;
     private boolean isTurnComplete;
     private boolean moveOrMeld;
+
+
+    private static final Map<Integer, String> MELDS;
+
+    //static initializations
+    static {
+        HashMap<Integer, String> aMap =  new HashMap<Integer, String>();
+        aMap.put(1,"flush");
+        aMap.put(2,"royal marriage");
+        aMap.put(3,"marriage");
+        aMap.put(4,"dix");
+        aMap.put(5,"four Aces");
+        aMap.put(6,"four Kings");
+        aMap.put(7,"four Queens");
+        aMap.put(8,"four Jacks");
+        aMap.put(9,"Pinochle");
+        MELDS = Collections.unmodifiableMap(aMap);
+    }
 
     public Round(int winnerLastRound)
     {
@@ -109,11 +129,18 @@ public class Round {
         return nextTurn;
     }
 
-    public void play(Integer cardID) {
+    public void play(Integer cardID, ArrayList<String> listOfLogs) {
         listOfPlayers.get(nextTurn).makeMove(cardID, listOfPlayers.get((nextTurn == 0)?1:0).getPlayedCards(),trumpCard);
 
         //only move is allowed, no meld
         moveOrMeld =true;
+
+        String tempString = "the player chose : ";
+        tempString+=listOfPlayers.get(nextTurn).getPlayedCards().size()+"---";
+        tempString+=Character.toString(listOfPlayers.get(nextTurn).getPlayedCards().get(0).getCardFace());
+        tempString+=Character.toString(listOfPlayers.get(nextTurn).getPlayedCards().get(0).getCardSuit());
+
+        listOfLogs.add(tempString);
 
         //process played cards, in meld maps, and collections
         listOfPlayers.get(nextTurn).processPlayedCards();
@@ -124,7 +151,11 @@ public class Round {
 
         if(isTurnComplete)
         {
+
             nextTurn = processMoves();
+            listOfLogs.set((listOfLogs.size()-1), listOfLogs.get(listOfLogs.size()-1)+"\n"+
+                    listOfPlayers.get(nextTurn).getPlayerName()+ " won the move");
+
             processTurnWin();
 
             return;
@@ -132,6 +163,7 @@ public class Round {
     }
 
     private void processTurnWin() {
+
         //capturePile update
         listOfPlayers.get(nextTurn).addToCapturePile(listOfPlayers.get(nextTurn).playedCards.get(0) );
         listOfPlayers.get(nextTurn).addToCapturePile(listOfPlayers.get((0 == nextTurn) ? 1 : 0).playedCards.get(0) );
@@ -201,6 +233,17 @@ public class Round {
             int possibleMeld = evaluateMeld(mergedCards);
             //move the cards to the meld Pile;
             if(possibleMeld != 0) {
+                if(listOfPlayers.get(nextTurn).getPlayerName().equals("Human"))
+                {
+                    StringBuilder tempString = new StringBuilder();
+                    tempString.append("Human should choose the meld with cards");
+                    for(Card card: mergedCards)
+                    {
+                        tempString.append(card.getCardFace()+card.getCardSuit());
+                    }
+                    tempString.append("to make a ");
+                    tempString.append(MELDS.get(possibleMeld));
+                }
                 //update score
                 listOfPlayers.get(nextTurn).addMeldScore(possibleMeld);
 

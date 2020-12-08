@@ -61,8 +61,8 @@ public class Game {
         currentRound.processMoves();
     }
 
-    public void play(Integer cardID) {
-        currentRound.play(cardID);
+    public void play(Integer cardID, ArrayList<String> listOfLogs) {
+        currentRound.play(cardID, listOfLogs);
     }
 
     public void makeMeld(ArrayList<Integer> selectedCard, ArrayList<String> listOfLogs) {
