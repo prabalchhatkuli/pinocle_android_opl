@@ -52,7 +52,7 @@ public class Round {
             player.addToHand(tempCard);
         }
 
-        if(roundDeck.getDeckSize() == 0 && trumpCard.getCardID()!=0 && numberOfDraws == 1)
+        if(roundDeck.getDeckSize() == 0 && trumpCard.getCardFace()!='0' && numberOfDraws == 1)
         {
             player.addToHand(trumpCard);
             trumpCard = new Card('0', trumpCard.getCardSuit(), 0);
@@ -158,8 +158,12 @@ public class Round {
         return moveOrMeld;
     }
 
-    public void makeMeld(ArrayList<Integer> selectedCard)
+    public void makeMeld(ArrayList<Integer> selectedCard, ArrayList<String> listOfLogs)
     {
+        if(selectedCard.size()==0)
+            listOfPlayers.get(nextTurn).decideMeldInterface(selectedCard, trumpCard, listOfLogs);
+
+
         //the cards with cardID in selectedCard belongs to the player whose number is in nextTurn
         ArrayList<Card> cardsFromHand = new ArrayList<Card>();
         ArrayList<Card> cardsFromMeld = new ArrayList<Card>();
@@ -237,6 +241,9 @@ public class Round {
                 }
             }
         }
+
+        if(cardsInMeldPile == mergedCards.size())
+            return 0;
         //sort the played cards so that it is easy for comparision based on the index of the cards
         //the comments describe how they are compared
         Collections.sort(mergedCards, new Comparator<Card>() {
@@ -387,21 +394,23 @@ public class Round {
         dealCardsFromDeck(listOfPlayers.get((nextTurn==0)?1:0), 1);
     }
 
-    public void letPlayerMakeMeld() {
-        listOfPlayers.get(nextTurn).decideMeld(trumpCard);
+    public void getPlayerMeldHelp(ArrayList<String> listOfLogs) {
+        ArrayList<Integer> selectedCardID= new ArrayList<Integer>();
+        listOfPlayers.get(nextTurn).decideMeld(selectedCardID, trumpCard, listOfLogs);
+
     }
 
-    public void getPlayerMove() {
+    public void getPlayerMove(ArrayList<String> listOfLogs) {
+        //lead
         if (listOfPlayers.get((nextTurn==0?1:0)).playedCards.size() == 0) {
             Card x = listOfPlayers.get(nextTurn).getTacticalCard(trumpCard);
-            System.out.println("The card that should be chosen is:");
-            System.out.println(x.getCardFace()+" "+x.getCardSuit());
+            listOfLogs.add("Recommended to chose the card: "+ x.getCardFace()+" "+x.getCardSuit()+" after saving possible melds");
         }
+        //chase
         else
         {
             Card x = listOfPlayers.get(nextTurn).getCheapestCard(listOfPlayers.get((nextTurn==0?1:0)).playedCards.get(0),trumpCard);
-            System.out.println("The card that should be chosen is:");
-            System.out.println(x.getCardFace()+" "+x.getCardSuit());
+            listOfLogs.add("Recommended to chose the card: "+ x.getCardFace()+" "+x.getCardSuit()+" for possible win.");
         }
 
     }
@@ -413,7 +422,7 @@ public class Round {
 
     public void setTrumpCard(String card) {
         if(card.length() == 2 )trumpCard = new Card(card.charAt(0), card.charAt(1));
-        else trumpCard = new Card('0', card.charAt(1));
+        else trumpCard = new Card('0', card.charAt(0));
     }
 
     public void setRoundDeck(String[] cards) {

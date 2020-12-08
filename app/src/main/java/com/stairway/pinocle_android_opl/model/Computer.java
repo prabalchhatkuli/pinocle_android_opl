@@ -28,11 +28,10 @@ public class Computer extends Player{
         play(chosenCardID);
     }
 
-    public void makeMeld()
+    public void decideMeldInterface(ArrayList<Integer> selectedCard, Card trumpCard, ArrayList<String> listOfLogs)
     {
         //find melds
-
-        //declare melds
+        decideMeld(selectedCard, trumpCard, listOfLogs);
     }
 
 }

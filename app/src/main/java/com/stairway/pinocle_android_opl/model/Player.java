@@ -116,7 +116,7 @@ public abstract class Player {
 
     abstract void makeMove(Integer cardID, ArrayList<Card> playedCards, Card trumpCard);
 
-    //abstract void makeMeld();
+    abstract void decideMeldInterface(ArrayList<Integer> selectedCard, Card trumpCard, ArrayList<String> listOfLogs);
 
     public void play(Integer selectedCard) {
         //determine if the card is in the meld or the player cards
@@ -173,8 +173,6 @@ public abstract class Player {
     public void addNewMeldCards(final int possibleMeld, ArrayList<Card> cardsFromHand) {
         for(Card card : cardsFromHand)
         {
-            System.out.println(card.getCardFace()+card.getCardSuit());
-            System.out.println("was processed");
             //add to meld pile
             meldPile.add(card);
 
@@ -190,6 +188,11 @@ public abstract class Player {
         for(Card card: cardsFromMeld)
         {
             cardToMeldMap.get(card).add(possibleMeld);
+
+            if(!meldPile.contains(card))
+            {
+                meldPile.add(card);
+            }
         }
     }
 
@@ -209,7 +212,7 @@ public abstract class Player {
     }
 
     /*Computer and hint strategies*/
-    public void decideMeld(Card trumpCard)
+    public void decideMeld(ArrayList<Integer> selectedCard, Card trumpCard, ArrayList<String> listOfLogs)
     {
         ArrayList<Card> listOfPlayableCards =  new ArrayList<Card>();
 
@@ -227,7 +230,7 @@ public abstract class Player {
         {
             //cout << "No Melds are possible from the list of cards for the "<< getPlayerName() << " player." << endl;
             playedCards.clear();
-            System.out.println("No melds are possible");
+            listOfLogs.add("No melds are possible");
             return;
         }
 
@@ -235,34 +238,50 @@ public abstract class Player {
         //sort the list of possible melds
         Collections.sort(listOfPossibleMelds, new Comparator<Pair<ArrayList<Card>, Integer>>() {
             @Override public int compare( final Pair<ArrayList<Card>, Integer> p1, final Pair<ArrayList<Card>, Integer> p2) {
-                return p2.second-p1.second ; // Ascending
+                return (MELD_POINTS.get(p2.second)-MELD_POINTS.get(p1.second)) ; // Ascending
             }
         });
 
         //get the first element
         ArrayList<Card> chosenMeld = listOfPossibleMelds.get(0).first;
 
-        System.out.println("The size of the predicted list is:");
-        System.out.println(listOfPossibleMelds.size());
-        for(Pair<ArrayList<Card>, Integer> each: listOfPossibleMelds)
+        /*for(Pair<ArrayList<Card>, Integer> each: listOfPossibleMelds)
         {
             for(Card card: each.first)
             {
                 System.out.println(card.getCardFace()+" "+card.getCardSuit()+',');
             }
-            System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-        }
+        }*/
 
         //place all the cards needed for the meld into playedCards.
         playedCards.clear();
-        playedCards.addAll(chosenMeld);
+        //playedCards.addAll(chosenMeld);
 
-        System.out.println("Recommendation to chose:");
+        String displayString = new String();
+
+        if(playerName.equals("Human"))
+            displayString+="Human should choose the cards:";
+        else
+            displayString+="Computer played the cards:";
+
         for(Card card: chosenMeld)
         {
-            System.out.println(card.getCardFace()+" "+card.getCardSuit());
+            selectedCard.add(card.getCardID());
+            displayString+=(card.getCardFace()+" "+card.getCardSuit());
+
         }
 
+
+        displayString+=" to make a ";
+        displayString+=MELDS.get(listOfPossibleMelds.get(0).second);
+
+        //for computer player execute meld
+        if(playerName.equals("Computer"))
+        {
+
+        }
+
+        listOfLogs.add(displayString);
 
         return;
     }
@@ -309,9 +328,10 @@ public abstract class Player {
             if (0 != possibleMeld)
             {
                 //the section of the code below is for storing the meld so that it can be used while the user want to call meld
-                listOfPossibleMelds.add(new Pair<ArrayList<Card>, Integer>(mergedCards, MELD_POINTS.get(possibleMeld)));
+                listOfPossibleMelds.add(new Pair<ArrayList<Card>, Integer>(mergedCards, possibleMeld));
 
                 scoreForThisList[0] += MELD_POINTS.get(possibleMeld);
+                System.out.println(MELDS.get(possibleMeld));
             }
 
             //clear "playedCards" variable
@@ -356,6 +376,9 @@ public abstract class Player {
                 }
             }
         }
+
+        if(cardsInMeldPile == mergedCards.size())
+            return 0;
         //sort the played cards so that it is easy for comparision based on the index of the cards
         //the comments describe how they are compared
         Collections.sort(mergedCards, new Comparator<Card>() {
@@ -590,31 +613,85 @@ public abstract class Player {
         });
 
         //find the first card on the vector that is not of trump suit
-        for (int i = 0; i < winningCards.size(); i++)
-        {
-            //if found return card
-            if (winningCards.get(i).getCardSuit() != trumpCard.getCardSuit())
-            {
-                Card tempCard = winningCards.get(0);
-                winningCards.set(0, winningCards.get(i));
-                winningCards.set(i, tempCard);
-                break;
-            }
-        }
 
-        if (winningCards.size() == (playerHand.size() + meldPile.size()))
-        {
-           System.out.println( winningCards.get(0).getCardFace() + winningCards.get(0).getCardSuit() +" because it has no cards that will win the move.");
-        }
-        else
-        {
-            System.out.println( winningCards.get(0).getCardFace() + winningCards.get(0).getCardSuit() +"  because it could win the move.");
-        }
+
+        //from the winning cards, evaluate all melds for each card
+        //find the most tactical card
+        return getCheapestMeldAccountedCard(winningCards, trumpCard);
 
         //if no such card is found
         //return the cheapest card: [0] first card of the sorted list
-        return winningCards.get(0);
+        //return winningCards.get(0);
 
+    }
+
+    private Card getCheapestMeldAccountedCard(ArrayList<Card> winningCards, Card trumpCard) {
+
+        //vector to store the overall meldscore if we remove a card from the deck
+        ArrayList<Integer> meldScoreEachCard = new ArrayList<>();
+
+        //vector to store all playable cards
+        ArrayList<Card> listOfPlayableCards = new ArrayList<>();
+
+        //temporary vector to store cards with maximum points
+        ArrayList<Card> cardsWithMaxPoints = new ArrayList<>();
+
+        //
+        //create a vector with all playable cards: combine hand and meld pile
+        listOfPlayableCards.addAll(playerHand);
+        listOfPlayableCards.addAll(meldPile);
+
+        //for each element(Card*): create another vector by removing that element from the overall vector
+        for (int i = 0; i < winningCards.size(); i++)
+        {
+            //temporary variable to store the list of cards when an element at index i is removed
+            ArrayList<Card> tempListOfCards = new ArrayList<>();
+            tempListOfCards.addAll(listOfPlayableCards);
+            tempListOfCards.remove(winningCards.get(i));
+
+            int possibleScore = findPossibleScores(tempListOfCards, trumpCard);
+
+            //add the score of removing this card
+            meldScoreEachCard.add(possibleScore);
+        }
+
+
+        int maxPoints = 0;
+
+        //find the indexes with the highest points for the melds in overalllMeldScoreEachCard
+        maxPoints = Collections.max(meldScoreEachCard);
+
+
+        for (int i = 0; i < meldScoreEachCard.size(); i++)
+        {
+            //this means that the if this card is removed, we will have the highest possibility of scoring in meld, if we win
+            if (maxPoints == meldScoreEachCard.get(i))
+            {
+                cardsWithMaxPoints.add(winningCards.get(i));
+            }
+        }
+
+        Collections.sort(cardsWithMaxPoints, new Comparator<Card>() {
+            @Override public int compare(  Card p1, Card p2) {
+                return p2.getCardPoints()-p1.getCardPoints() ;
+            }
+        });
+
+        //from the cards with high meld points choose the first card/ if there is a trump card suit with equal points
+        for (int i = (cardsWithMaxPoints.size()-1); i >=0; i--)
+        {
+            //if found return card
+            if (cardsWithMaxPoints.get(i).getCardSuit() != trumpCard.getCardSuit())
+            {
+                //Card tempCard = cardsWithMaxPoints.get(0);
+                return cardsWithMaxPoints.get(i);
+                //cardsWithMaxPoints.set(0, cardsWithMaxPoints.get(i));
+                //cardsWithMaxPoints.set(i, tempCard);
+                //break;
+            }
+        }
+
+        return cardsWithMaxPoints.get(cardsWithMaxPoints.size()-1);
     }
 
     private ArrayList<Card> findPlayableCards(Card leadCard, Card trumpCard) {
@@ -963,5 +1040,20 @@ public abstract class Player {
 
         //finally merge the buffer into the main cardToMeldMap
         cardToMeldMap.putAll(cardToMeldMapBuffer);
+    }
+
+    public void clearAllInfo() {
+        playerHand.clear();
+        meldPile.clear();
+        playedCards.clear();
+        capturePile.clear();
+
+        playerGameScore+=playerRoundScore;
+        playerRoundScore=0;
+
+        cardToMeldMap.clear();
+        meldToCardMap.clear();
+
+
     }
 }

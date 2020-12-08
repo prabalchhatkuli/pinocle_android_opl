@@ -1,9 +1,11 @@
 package com.stairway.pinocle_android_opl.view;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -34,6 +36,7 @@ public class GameActivity extends AppCompatActivity {
     private boolean moveOrMeld;
     private boolean isChasePlayer;
     private int playerTurn;
+    ArrayList<String> listOfLogs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +47,8 @@ public class GameActivity extends AppCompatActivity {
         String gameType = intent.getExtras().getString("type");
         String startPlayer;
         String filename;
+        listOfLogs = new ArrayList<>();
+
 
 
         moveOrMeld = true;
@@ -56,6 +61,14 @@ public class GameActivity extends AppCompatActivity {
         if(gameType.equals("new")) {
             startPlayer = intent.getExtras().getString("turn");
             game = new Game((startPlayer.equals("human"))?0:1);
+            if(startPlayer.equals("human"))
+            {
+                listOfLogs.add("Yes, You won the toss.");
+            }
+            else
+            {
+                listOfLogs.add("No, You lost the toss.");
+            }
             game.startGame();
         }
         else
@@ -99,11 +112,16 @@ public class GameActivity extends AppCompatActivity {
         meldButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (selectedCard.isEmpty()) {
+                if (game.getListOfPlayers().get(game.getNextPlayer()).getPlayerName().equals("Human") && selectedCard.isEmpty()) {
                     makeToast("You have not selected a card yet.");
                 }
+                else if(game.getListOfPlayers().get(game.getNextPlayer()).getPlayerName().equals("Computer"))
+                {
+                    game.makeMeld(new ArrayList<Integer>(), listOfLogs);
+                    refreshView();
+                }
                 else {
-                    game.makeMeld(selectedCard);
+                    game.makeMeld(selectedCard, listOfLogs);
 
                     //refresh
                     refreshView();
@@ -128,12 +146,13 @@ public class GameActivity extends AppCompatActivity {
             public void onClick(View view) {
                 if(moveOrMeld)
                 {
-                    game.getPlayerMove();
+                    game.getPlayerMove(listOfLogs);
                 }
                 else
                 {
-                    game.decideMeld();
+                    game.getMeldHelp(listOfLogs);
                 }
+                refreshView();
             }
         });
 
@@ -172,6 +191,7 @@ public class GameActivity extends AppCompatActivity {
         Button moveButton = findViewById(R.id.moveButton);
         Button saveButton = findViewById(R.id.saveButton);
         Button helpButton = findViewById(R.id.helpButton);
+        TextView commentView = findViewById(R.id.commentTextView);
 
         //clear layouts
         humanHand.removeAllViews();
@@ -228,6 +248,7 @@ public class GameActivity extends AppCompatActivity {
                 System.out.println("Size of meld of human is");
                 System.out.println(each.getMeldPile().size());
                 addCardsToView(each.getCapturePile(), humanCapture);
+
             }
             else
             {
@@ -240,6 +261,10 @@ public class GameActivity extends AppCompatActivity {
 
             //for the desk
             addCardsToView(each.getPlayedCards(), deskLayout);
+            if(each.getPlayedCards().size()!=0)
+            {
+                listOfLogs.add(each.getPlayerName()+" chose "+ each.getPlayedCards().get(0).getCardFace()+each.getPlayedCards().get(0).getCardSuit());
+            }
         }
 
         //updating the deck of cards
@@ -249,6 +274,7 @@ public class GameActivity extends AppCompatActivity {
 
         //getting the trumpCard and the nextPlayer
         LinearLayout trumpLayout = findViewById(R.id.trumpLayout);
+        trumpLayout.removeAllViews();
         addCardsToView(new ArrayList<Card>(){{add(game.getTrumpCard());}}, trumpLayout);
 
         //next player name
@@ -269,9 +295,39 @@ public class GameActivity extends AppCompatActivity {
         TextView computerScore = findViewById(R.id.computerScoreView);
         TextView roundNum = findViewById(R.id.roundView);
 
+        if(listOfLogs.size()>0)
+            commentView.setText("Comment: " +listOfLogs.get(listOfLogs.size()-1));
         roundNum.setText("Round:"+Integer.toString(game.getRoundNumber()));
         humanScore.setText(Integer.toString(game.getListOfPlayers().get(0).getPlayerGameScore()) +"/"+Integer.toString(game.getListOfPlayers().get(0).getPlayerRoundScore()) );
         computerScore.setText(Integer.toString(game.getListOfPlayers().get(1).getPlayerGameScore()) +"/"+Integer.toString(game.getListOfPlayers().get(1).getPlayerRoundScore()) );
+
+        //end of round prompt
+        if((listOfPlayer.get(0).getCapturePile().size()+listOfPlayer.get(1).getCapturePile().size() == 48))
+        {
+            String[] options = {"Yes, start another.", "No, quit the game."};
+
+            //display prompt
+            final AlertDialog.Builder prompt = new AlertDialog.Builder(GameActivity.this);
+
+            prompt.setTitle("End of Round: want to start another round?");
+
+            prompt.setItems(options, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    if(which == 0)
+                    {
+                        //reset game and update player game/round scores
+                        game.resetGame();
+                        listOfLogs.clear();
+                        dialog.dismiss();
+                        refreshView();
+                    }
+                }
+            });
+
+            prompt.show();
+        }
+
     }
 
     @SuppressLint("ResourceType")
@@ -327,11 +383,12 @@ public class GameActivity extends AppCompatActivity {
                             for ( int l = 0; l < tempCheckMeldCollection.size(); l++)
                             {
                                 //if the card is found an asterisk is required, break off the program, go to the next card
-                                if (tempCheckMeldCollection.contains(vectorWithinVector.get(j)))
+                                if (tempCheckMeldCollection.get(l).contains(vectorWithinVector.get(j)))
                                 {
+                                    System.out.println("Star found");
                                     meldString += '*';
                                     final ImageView starImage = new ImageView(this);
-                                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(180, 190);
+                                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(30, 30);
                                     params.setMargins(15, 0, -30, 0);
                                     starImage.setLayoutParams(params);
                                     Context context = meldView.getContext();
@@ -353,22 +410,23 @@ public class GameActivity extends AppCompatActivity {
                         }
                     }
                 }
+                //line separating melds
+                final ImageView lineImage = new ImageView(this);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(180, 190);
+                params.setMargins(15, 0, -30, 0);
+                lineImage.setLayoutParams(params);
+                Context context = meldView.getContext();
+                int id = context.getResources().getIdentifier("line", "drawable", context.getPackageName());
+
+                lineImage.setImageResource(id);
+
+                lineImage.setId(22);
+                lineImage.setClickable(true);
+
+                meldView.addView(lineImage);
             }
 
-            //line separating melds
-            final ImageView lineImage = new ImageView(this);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(180, 190);
-            params.setMargins(15, 0, -30, 0);
-            lineImage.setLayoutParams(params);
-            Context context = meldView.getContext();
-            int id = context.getResources().getIdentifier("line", "drawable", context.getPackageName());
 
-            lineImage.setImageResource(id);
-
-            lineImage.setId(22);
-            lineImage.setClickable(true);
-
-            meldView.addView(lineImage);
 
             //it.remove(); // avoids a ConcurrentModificationException
         }

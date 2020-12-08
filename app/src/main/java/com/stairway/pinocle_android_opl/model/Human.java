@@ -14,10 +14,10 @@ public class Human extends Player{
         play(cardID);
     }
 
-    public void makeMeld()
+    public void decideMeldInterface(ArrayList<Integer> selectedCard, Card trumpCard, ArrayList<String> listOfLogs)
     {
         //find melds
-
+        return;
         //declare melds
     }
 }

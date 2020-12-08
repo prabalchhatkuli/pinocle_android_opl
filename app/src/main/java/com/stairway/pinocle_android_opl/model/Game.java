@@ -65,30 +65,80 @@ public class Game {
         currentRound.play(cardID);
     }
 
-    public void makeMeld(ArrayList<Integer> selectedCard) {
-        currentRound.makeMeld(selectedCard);
+    public void makeMeld(ArrayList<Integer> selectedCard, ArrayList<String> listOfLogs) {
+        currentRound.makeMeld(selectedCard,listOfLogs);
     }
 
     public void drawRoundCards() {
         currentRound.drawCards();
     }
 
-    public void decideMeld() {
-        currentRound.letPlayerMakeMeld();
+    public void getMeldHelp(ArrayList<String> listOfLogs) {
+        currentRound.getPlayerMeldHelp(listOfLogs);
     }
 
-    public void getPlayerMove() {
-        currentRound.getPlayerMove();
+    public void getPlayerMove(ArrayList<String> listOfLogs) {
+        currentRound.getPlayerMove(listOfLogs);
     }
 
     public void saveState() {
-        String info = currentRound.serialize();
         try {
             if(Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-                String fileName = "testsavefile.txt";
-                File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/"+fileName);
-                OutputStream output = new FileOutputStream(file);
-                output.write(info.getBytes());
+                String filename = new String();
+                Integer saveFileCount = 0;
+                File saveFile;
+
+                //find filename not already taken
+                while(true)
+                {
+                    filename = "gameSave"+Integer.toString(saveFileCount);
+                    String fileDir = Environment.getExternalStorageDirectory().getAbsolutePath()+"/pinochlesave/"+filename;
+                    saveFile = new File(fileDir);
+                    if(!saveFile.exists()){
+                        break;
+                    }
+                    else
+                    {
+                        saveFileCount+=1;
+                    }
+                }
+
+                OutputStream output = new FileOutputStream(saveFile);
+
+                //write output using the stream object
+                StringBuilder saveFileContent = new StringBuilder();
+
+                //build string
+                saveFileContent.append("Round").append(Integer.toString(numRounds)).append("\n");
+
+                for(int i=0; i<listOfPlayers.size(); i++)
+                {
+                    if(1==i)
+                    {
+                        saveFileContent.append("Computer").append("\n");
+                    }
+                    else
+                    {
+                        saveFileContent.append("Human").append("\n");
+                    }
+
+                    //player scores
+
+                    //player hand cards
+
+                    //player capture cards
+
+                    //player meld cards
+                }
+
+                //stcok cards
+
+                //trump card
+
+                //next turn
+                output.write(saveFileContent.toString().getBytes());
+
+
                 output.close();
             }
         }
@@ -286,7 +336,7 @@ public class Game {
         int counter = 1;
         while (counter >= 0)
         {
-            listOfPlayers.get(counter).setMeldPile(meldsForPlayers.get(counter), currentRound.getTrumpCard());
+            listOfPlayers.get((counter==0)?1:0).setMeldPile(meldsForPlayers.get(counter), currentRound.getTrumpCard());
             counter--;
         }
 
@@ -308,5 +358,26 @@ public class Game {
 
     public int getRoundNumber() {
         return numRounds;
+    }
+
+    public void resetGame() {
+        //get next player who will start the next round
+        winnerLastRound = getNextPlayer();
+
+        numRounds++;
+
+        int counter = 0;
+
+        while(counter<=1)
+        {
+            listOfPlayers.get(counter).clearAllInfo();
+            counter++;
+        }
+
+        currentRound = new Round(winnerLastRound);
+
+        currentRound.startRound(listOfPlayers, winnerLastRound);
+
+
     }
 }
