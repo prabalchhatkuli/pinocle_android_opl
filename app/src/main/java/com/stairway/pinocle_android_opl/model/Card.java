@@ -1,12 +1,23 @@
 package com.stairway.pinocle_android_opl.model;
 
 public class Card {
+    //for card face, suit, ID, points and static counter for ID
     private char cardFace;
     private char cardSuit;
     private int cardPoints;
     private int cardID;
     private static int cardIDCounter=0;
 
+    /**
+     static function that increments the ID counter
+     */
+    private static void incrementCardCounter() {
+        cardIDCounter+=1;
+    }
+
+    /**
+     default constructor for a card
+     */
     public Card()
     {
         cardFace = '0';
@@ -15,6 +26,12 @@ public class Card {
         cardID = 0;
     }
 
+    /**
+     Overloaded constructor with 3 parameters
+     @param cardFace, a character , that contains the face of the card
+     @param cardSuit, a character, that contains the suit of the card
+     @param cardID, an integer, that contains the unique ID for a card
+     */
     public Card(char cardFace, char cardSuit, int cardID)
     {
         //initialize member variables
@@ -41,6 +58,11 @@ public class Card {
         }
     }
 
+    /**
+     Overloaded constructor with 3 parameters
+     @param cardFace, a character , that contains the face of the card
+     @param cardSuit, a character, that contains the suit of the card
+     */
     public Card(char cardFace, char cardSuit)
     {
         //initialize member variables
@@ -68,15 +90,10 @@ public class Card {
         }
     }
 
-    private static void incrementCardCounter() {
-        cardIDCounter+=1;
-    }
 
+    //public getters for private class variables
     public char getCardFace() { return this.cardFace; }
 	public char getCardSuit() { return this.cardSuit; }
     public int getCardPoints() { return this.cardPoints; }
     public int getCardID(){return this.cardID;}
-
-    public static class Game {
-    }
 }

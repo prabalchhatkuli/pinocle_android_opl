@@ -1,6 +1,9 @@
 package com.stairway.pinocle_android_opl.model;
 
+import android.content.Context;
 import android.util.Pair;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,6 +14,11 @@ import java.util.Map;
 
 public abstract class Player {
 
+    //player maps
+    private static final Map<Integer, String> MELDS;
+    private static final Map<Integer, Integer> MELD_POINTS;
+
+    //member variables
     protected String playerName;
     protected ArrayList<Card> playerHand;
     protected ArrayList<Card> capturePile;
@@ -21,10 +29,6 @@ public abstract class Player {
     protected int playerGameScore;
     protected int playerRoundScore;
 
-    //player maps
-    private static final Map<Integer, String> MELDS;
-    private static final Map<Integer, Integer> MELD_POINTS;
-
     //variable to store the melds and corresponding cards for those melds
     protected Map<Integer, ArrayList<ArrayList<Card>>> meldToCardMap;
 
@@ -34,7 +38,7 @@ public abstract class Player {
     //vector to store the list of possible melds for a list of cards
     ArrayList<Pair<ArrayList<Card>, Integer>> listOfPossibleMelds;
 
-    //static initializations
+    //static initializations for the final variables
     static {
         HashMap<Integer, String> aMap =  new HashMap<Integer, String>();
         aMap.put(1,"flush");
@@ -63,6 +67,9 @@ public abstract class Player {
         MELD_POINTS = Collections.unmodifiableMap(aMap);
     }
 
+    /**
+     Player class default constructor
+     */
     public Player()
     {
         playerGameScore = 0;
@@ -76,53 +83,106 @@ public abstract class Player {
         listOfPossibleMelds = new ArrayList<>();
     }
 
+    /**
+     getPlayerGameScore, get the score for the player
+     @return an integer, with the player's game score
+     */
     public int getPlayerGameScore() {
         return playerGameScore;
     }
 
+    /**
+     getPlayerRoundScore, get the round score for the player
+     @return an integer, with the player's round score
+     */
     public int getPlayerRoundScore(){
         return playerRoundScore;
     }
+
+    /**
+     addToRoundScore, add a score to the round score
+     @param score, an integer which contains the score to be added
+     */
     public void addToRoundScore(int score){
         playerRoundScore += score;
     }
 
+    /**
+     getPlayerHand, get the hand pile
+     @return an Arraylist of card objects, which contains the player's hand cards
+     */
     public ArrayList<Card> getPlayerHand()
     {
         return  playerHand;
     }
 
+    /**
+     getCapturePile, get the capture pile
+     @return an Arraylist of card objects, which contains the player's capture cards
+     */
     public ArrayList<Card> getCapturePile()
     {
         return  capturePile;
     }
 
+    /**
+     getMeldPile, get the meld pile
+     @return an Arraylist of card objects, which contains the player's meld pile
+     */
     public ArrayList<Card> getMeldPile()
     {
         return  meldPile;
     }
 
+    /**
+     * return the name of the player
+     */
     public String getPlayerName() {
         return playerName;
     }
 
+    /**
+     addToHand, add a card to the hand pile
+     @param card, a Card object to be added to the hand
+     */
     public void addToHand(Card card){
         playerHand.add(card);
     }
 
+    /**
+     addToCapturePile, add a card to the capture pile
+     @param card, a Card object to be added to the pile
+     */
     public void addToCapturePile(Card card){
         capturePile.add(card);
     }
 
+    /**
+     makeMove, function to make a move for the a player
+     @param cardID, an integer which contains the ID of the card that was selected for the move
+     @param playedCards, an integer which contains the cards played by the lead player if there was any
+     @param trumpCard, a card object which contains the trump card for the current round
+     */
     abstract void makeMove(Integer cardID, ArrayList<Card> playedCards, Card trumpCard);
 
+    /**
+     decideMeldInterface, a function to decide meld playable
+     @param selectedCard, an empty arraylist which will be populated in decideMeld function
+     @param trumpCard, a card object which contains the trump card for the current round
+     @param listOfLogs, an arraylist of string used to display logs
+     */
     abstract void decideMeldInterface(ArrayList<Integer> selectedCard, Card trumpCard, ArrayList<String> listOfLogs);
 
+    /**
+     play, a function to execute a card move made by a player
+     @param selectedCard, an Integer which contains the ID of the card that was chosen
+     */
     public void play(Integer selectedCard) {
         //determine if the card is in the meld or the player cards
         boolean isInHandOrMeld = true;
         Card foundCard = null;
 
+        //find in the hand pile
         for(Card card: playerHand)
         {
             if(selectedCard == card.getCardID())
@@ -135,6 +195,7 @@ public abstract class Player {
             }
         }
 
+        //find in the meld pile
         for(Card card: meldPile)
         {
             if(selectedCard == card.getCardID())
@@ -152,14 +213,23 @@ public abstract class Player {
 
     }
 
+    /*returns the list of cards played by the user for the turn*/
     public ArrayList<Card> getPlayedCards() {
         return playedCards;
     }
 
+    /**
+     addMeldScore, add the scores of a meld to player's round score
+     @param possibleMeld, an integer which is a key to a particular meld
+     */
     public void addMeldScore(int possibleMeld) {
         this.playerRoundScore+=MELD_POINTS.get(possibleMeld);
     }
 
+    /**
+     removeCardsFromHand, remove a list of cards from the player's hand
+     @param cardsFromHand, an ArrayList of Card objects from the user's hand played for the move or meld
+     */
     public void removeCardsFromHand(ArrayList<Card> cardsFromHand) {
         for(Card card: cardsFromHand) {
             for (int i = playerHand.size() - 1; i >= 0; i--) {
@@ -170,6 +240,11 @@ public abstract class Player {
         }
     }
 
+    /**
+     addNewMeldCards, add hand cards to meld pile
+     @param possibleMeld, an integer which contains the meld that was made
+     @param cardsFromHand, cards from hand that need to be processed into meld cards
+     */
     public void addNewMeldCards(final int possibleMeld, ArrayList<Card> cardsFromHand) {
         for(Card card : cardsFromHand)
         {
@@ -184,6 +259,11 @@ public abstract class Player {
         System.out.println(meldPile.size());
     }
 
+    /**
+     updateMeldCards, update the existing meld collection
+     @param possibleMeld, an integer which contains the meld that was made
+     @param cardsFromMeld, cards from meld that need to be reevaluated for the maps
+     */
     public void updateMeldCards(int possibleMeld, ArrayList<Card> cardsFromMeld) {
         for(Card card: cardsFromMeld)
         {
@@ -196,6 +276,11 @@ public abstract class Player {
         }
     }
 
+    /**
+     addToMeldToCardMap, add a record in the cardToMeldMap
+     @param possibleMeld, an integer which contains the meld that was made
+     @param mergedCards, cards to be added into the meldToCard map
+     */
     public void addToMeldToCardMap(int possibleMeld, final ArrayList<Card> mergedCards) {
 
         //search for the possible meld in the meldToCardMap
@@ -211,13 +296,20 @@ public abstract class Player {
         }
     }
 
-    /*Computer and hint strategies*/
+    /**
+     addToMeldToCardMap, add a record in the cardToMeldMap
+     @param selectedCard, the cards that need to be populated for the computer
+     @param trumpCard, a card object which contains the trump card for the current round
+     @param listOfLogs, an arraylist of string used to display logs
+     */
     public void decideMeld(ArrayList<Integer> selectedCard, Card trumpCard, ArrayList<String> listOfLogs)
     {
+        //variable declarations
         ArrayList<Card> listOfPlayableCards =  new ArrayList<Card>();
 
         int possibleScore;
-        
+
+        //find list of playable cards
         listOfPlayableCards.addAll(playerHand);
         listOfPlayableCards.addAll(meldPile);
 
@@ -245,13 +337,6 @@ public abstract class Player {
         //get the first element
         ArrayList<Card> chosenMeld = listOfPossibleMelds.get(0).first;
 
-        /*for(Pair<ArrayList<Card>, Integer> each: listOfPossibleMelds)
-        {
-            for(Card card: each.first)
-            {
-                System.out.println(card.getCardFace()+" "+card.getCardSuit()+',');
-            }
-        }*/
 
         //place all the cards needed for the meld into playedCards.
         playedCards.clear();
@@ -271,21 +356,19 @@ public abstract class Player {
 
         }
 
-
         displayString+=" to make a ";
         displayString+=MELDS.get(listOfPossibleMelds.get(0).second);
-
-        //for computer player execute meld
-        if(playerName.equals("Computer"))
-        {
-
-        }
 
         listOfLogs.add(displayString);
 
         return;
     }
 
+    /**
+     findPossibleScores, find possible meld scores that can be made from a set of cards
+     @param listOfCards, an arraylist of cards that are to be evaluated
+     @param trumpCard, a card object which contains the trump card for the current round
+     */
     private int findPossibleScores(ArrayList<Card> listOfCards, Card trumpCard) {
         //else:: we need possible scores for max::listOfCards.size() cards and min 1
         int[] scoreForThisList=new int[]{0};
@@ -301,7 +384,14 @@ public abstract class Player {
 
         return scoreForThisList[0];
     }
-
+    /**
+     findPossibleScores, find possible meld scores that can be made from a set of cards
+     @param listOfCards, an arraylist of cards that are to be evaluated
+     @param sizeOfListOfCards, an integer which contains the size of the list
+     @param sizeOfCombinations, an integer that specifies the size of combinations for cards
+     @param scoreForThisList, an integer array, which stores the score in the first element
+     @param trumpCard, a card object which contains the trump card for the current round
+     */
     private void findCombinations(ArrayList<Card> listOfCards, int sizeOfListOfCards, int sizeOfCombinations, int[] scoreForThisList, Card trumpCard) {
         
         ArrayList<Card> dataVector = new ArrayList<>();
@@ -312,6 +402,17 @@ public abstract class Player {
         utilityForMeldCombinations(listOfCards, sizeOfListOfCards, sizeOfCombinations, 0, dataVector, 0, scoreForThisList, trumpCard);
     }
 
+    /**
+     findPossibleScores, find possible meld scores that can be made from a set of cards
+     @param listOfCards, an arraylist of cards that are to be evaluated
+     @param sizeOfListOfCards, an integer which contains the size of the list
+     @param sizeOfCombinations, an integer that specifies the size of combinations for cards
+     @param indexForDataVector, an integer that has the index in the datavector
+     @param dataVector, a list of cards of a specific combination
+     @param indexForMainList, an integer for creating combinations from the main list
+     @param scoreForThisList, an integer array, which stores the score in the first element
+     @param trumpCard, a card object which contains the trump card for the current round
+     */
     private void utilityForMeldCombinations(ArrayList<Card> listOfCards, int sizeOfListOfCards, int sizeOfCombinations, int indexForDataVector, ArrayList<Card> dataVector, int indexForMainList, int[] scoreForThisList, Card trumpCard) {
         // if combination has reached the require size
         if (indexForDataVector == sizeOfCombinations)
@@ -379,14 +480,19 @@ public abstract class Player {
         dataVector.set(indexForDataVector, listOfCards.get(indexForMainList));
 
 
+        //dfs--search recursions
         utilityForMeldCombinations(listOfCards, sizeOfListOfCards, sizeOfCombinations, indexForDataVector + 1, dataVector, indexForMainList + 1, scoreForThisList, trumpCard);
 
         utilityForMeldCombinations(listOfCards, sizeOfListOfCards, sizeOfCombinations, indexForDataVector, dataVector, indexForMainList + 1, scoreForThisList, trumpCard);
 
-
     }
 
 
+    /**
+     evaluateMeld, function to evaluate what and if a meld is possible
+     @param mergedCards, an ArrayList of card objects to be evaluated
+     @param trumpCard, a card object which contains the trump card for the current round
+     */
     private int evaluateMeld(ArrayList<Card> mergedCards,Card trumpCard) {
         //variable to store the index of the possible meld
         int possibleMeld = 0;
@@ -553,6 +659,7 @@ public abstract class Player {
         }
     }
 
+    /*clear played cards*/
     public void clearPlayedCards() {
         playedCards.clear();
     }
@@ -560,6 +667,11 @@ public abstract class Player {
     public void getPlayerMove() {
     }
 
+    /**
+     getTacticalCard, find the best card for a lead player
+     @param trumpCard, a card object which contains the trump card for the current round
+     @return  a card object evaluated to be the best move
+     */
     public Card getTacticalCard(Card trumpCard){
         //vector to store the overall meldscore if we remove a card from the deck
         ArrayList<Integer> meldScoreEachCard = new ArrayList<>();
@@ -628,6 +740,11 @@ public abstract class Player {
 
     }
 
+    /**
+     getCheapestCard, find the best card for a chase player
+     @param trumpCard, a card object which contains the trump card for the current round
+     @return  a card object evaluated to be the best move
+     */
     public Card getCheapestCard(Card leadCard, Card trumpCard){
         //variable to store the winning cards
         ArrayList<Card> winningCards;
@@ -655,6 +772,12 @@ public abstract class Player {
 
     }
 
+    /**
+     getCheapestMeldAccountedCard, find the best card for a chase player from a list of winning cards by accounting the meld
+     @param winningCards, a list of cards that will win the move for the chase player
+     @param trumpCard, a card object which contains the trump card for the current round
+     @return  a card object evaluated to be the best move
+     */
     private Card getCheapestMeldAccountedCard(ArrayList<Card> winningCards, Card trumpCard) {
 
         //vector to store the overall meldscore if we remove a card from the deck
@@ -725,6 +848,12 @@ public abstract class Player {
         return cardsWithMaxPoints.get(cardsWithMaxPoints.size()-1);
     }
 
+    /**
+     findPlayableCards, finds the winning cards if possible, otherwise returns all playable cards
+     @param leadCard, a card object, the card played by the lead player for the turn
+     @param trumpCard, a card object which contains the trump card for the current round
+     @return  an either an ArrayList of card objects which is playable by the player to win, or all playable cards
+     */
     private ArrayList<Card> findPlayableCards(Card leadCard, Card trumpCard) {
         //vector to store cards that should be used on the move
         ArrayList<Card> listOfPlayableCards =  new ArrayList<>();
@@ -757,6 +886,13 @@ public abstract class Player {
         return listOfPlayableCards;
     }
 
+    /**
+     compareTwoCards, determines if a chase card can win the lead card
+     @param leadCard, a card object, the card played by the lead player for the turn
+     @param chaseCard, a card object, the card played by the chase player for the turn
+     @param trumpCard, a card object which contains the trump card for the current round
+     @return a boolean , true if win is possible false otherwise
+     */
     private boolean compareTwoCards(Card leadCard, Card chaseCard, Card trumpCard) {
         //if both cards are same, lead player wins
         if (leadCard.getCardSuit() == chaseCard.getCardSuit() && leadCard.getCardFace() == chaseCard.getCardFace())
@@ -803,14 +939,24 @@ public abstract class Player {
         }
     }
 
+    /**
+     @return the meldToCardMap
+     */
     public Map getMeldToCardMap() {
         return meldToCardMap;
     }
 
+    /**
+     @return the cardToMeldMap
+     */
     public Map getCardToMeldMap() {
         return cardToMeldMap;
     }
 
+    /**
+     processPlayedCards, process played cards from the hand or meld pile
+                            also updates the maps and collections
+     */
     public void processPlayedCards() {
         //process played cards, hand, and meld cards,
         //if the played card is in hand pile: 1)it can either be only part of a hand, 2) it can be part of a hand and an earlier meld
@@ -918,11 +1064,20 @@ public abstract class Player {
 
     }
 
+    /**
+     setPlayerScores, function to update the scores for the player from the load file
+     @param game, an integer, which contains the loaded game score
+     @param round, an integer, which contains the loaded round score
+     */
     public void setPlayerScores(int game, int round) {
         playerGameScore = game;
         playerRoundScore = round;
     }
 
+    /**
+     setPlayerHand, set the hand from the loaded file
+     @param cards, an array of strings, which has the ascii representation of cards to be loaded
+     */
     public void setPlayerHand(String[] cards) {
         //vector to store the card objects
         ArrayList<Card> vectorOfCards = new ArrayList<>();
@@ -938,6 +1093,10 @@ public abstract class Player {
         playerHand.addAll(vectorOfCards);
     }
 
+    /**
+     setCapturePile, set the capture pile from the loaded file
+     @param cards, an array of strings, which has the ascii representation of cards to be loaded
+     */
     public void setCapturePile(String[] cards) {
 
         ArrayList<Card> vectorOfCards = new ArrayList<>();
@@ -953,6 +1112,11 @@ public abstract class Player {
         capturePile.addAll(vectorOfCards);
     }
 
+    /**
+     setMeldPile, set the meld pile and collections from a 2-d arraylist of strings
+     @param meldCards, an array of array of strings, to be loaded into the meld collections
+     @param trumpCard, a card object which contains the trump card for the current round
+     */
     public void setMeldPile(ArrayList<ArrayList<String>> meldCards, Card trumpCard) {
 
         //variable to act as a buffer for repeated meld cards (i.e. with *)
@@ -1073,6 +1237,7 @@ public abstract class Player {
         cardToMeldMap.putAll(cardToMeldMapBuffer);
     }
 
+    /*claear all info used for a round*/
     public void clearAllInfo() {
         playerHand.clear();
         meldPile.clear();
@@ -1088,7 +1253,86 @@ public abstract class Player {
 
     }
 
+    /*returns the total score for a player*/
     public int getTotalScore() {
         return playerGameScore+playerRoundScore;
+    }
+
+    /**
+     * returns a ascii representation of the player's meld information by evaluating the collections
+     */
+    public String getMeldString() {
+        Map<Card, ArrayList<Integer>> mp = getMeldToCardMap();
+
+        String meldString = new String();
+
+        Iterator it = mp.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry im = (Map.Entry)it.next();
+
+            ArrayList<ArrayList<Card>> tempVectorOfAMeld= (ArrayList<ArrayList<Card>>) im.getValue();
+
+            if (0 == tempVectorOfAMeld.size()) {
+                continue;
+            }
+
+            Integer currentMeld = (Integer) im.getKey();
+
+            for ( int i = 0; i < tempVectorOfAMeld.size(); i++)
+            {
+                final ArrayList<Card> vectorWithinVector = tempVectorOfAMeld.get(i);
+
+                for ( int j = 0; j < vectorWithinVector.size(); j++)
+                {
+                    //append the card to the output string
+                    //vectorWithinVector[j] is the card
+
+                    meldString += vectorWithinVector.get(j).getCardFace();
+                    meldString += vectorWithinVector.get(j).getCardSuit();
+
+                    final int index = j;
+
+                    //check if an asterisk is required
+                    //flag to see if the card was used in another active meld
+                    Boolean isFound = false;
+
+                    //go to the card index in card to meld map
+                    ArrayList<Integer> meldsForACard = (ArrayList<Integer>) getCardToMeldMap().get(vectorWithinVector.get(j));
+
+                    //for each meld mentioned for the card
+                    for ( int k = 0; k < meldsForACard.size(); k++)
+                    {
+                        //go to the meld to see if another meld with the card is still active
+                        if (currentMeld == meldsForACard.get(k)) {
+                            continue;
+                        } else
+                        {
+                            //collection of vectors for this meld
+                            ArrayList<ArrayList<Card>> tempCheckMeldCollection = (ArrayList<ArrayList<Card>>) getMeldToCardMap().get(meldsForACard.get(k));
+
+                            //for the vector of melds hence received
+                            for ( int l = 0; l < tempCheckMeldCollection.size(); l++)
+                            {
+                                //if the card is found an asterisk is required, break off the program, go to the next card
+                                if (tempCheckMeldCollection.get(l).contains(vectorWithinVector.get(j)))
+                                {
+                                    System.out.println("Star found");
+                                    meldString += "*";
+
+                                    isFound = true;
+                                    break;
+                                }
+                            }
+                            if (isFound)
+                                break;
+                        }
+                    }
+                }
+                //line separating melds
+                meldString +=",";
+            }
+
+        }
+        return meldString;
     }
 }

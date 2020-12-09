@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Round {
+    //member variables
     private int remainingTurns, nextTurn;
     private Deck roundDeck;
     private Card trumpCard;
@@ -32,6 +33,10 @@ public class Round {
         MELDS = Collections.unmodifiableMap(aMap);
     }
 
+    /**
+     overloaded constructor for the class
+     @param winnerLastRound, an integer, index to the listOfPlayers
+     */
     public Round(int winnerLastRound)
     {
         nextTurn = winnerLastRound;
@@ -41,6 +46,11 @@ public class Round {
         moveOrMeld =true;
     }
 
+    /**
+     startRound, function to initialize all information for starting the round
+     @param listOfPlayers, a list of player objects, players for the game
+     @param winnerLastRound, an integer for the winner of the last Round, who will start the game
+     */
     public void startRound(ArrayList<Player> listOfPlayers, int winnerLastRound) {
         this.listOfPlayers = listOfPlayers;
         this.nextTurn = winnerLastRound;
@@ -61,6 +71,11 @@ public class Round {
         trumpCard = roundDeck.dealCard();
     }
 
+    /**
+     dealCardsFromDeck, function to deal card to a player from the deck
+     @param player, a player object, that will receive the cards
+     @param numberOfDraws, an integer for the number of cards to be dealt
+     */
     public void dealCardsFromDeck(Player player, int numberOfDraws)
     {
         //temporary variable declarations
@@ -79,14 +94,20 @@ public class Round {
         }
     }
 
+    /*returns the deck of cards*/
     public ArrayList<Card> getDeck() {
         return roundDeck.getCards();
     }
 
+    /*returns the trump card*/
     public Card getTrumpCard() {
         return trumpCard;
     }
 
+    /**
+     processMoves, function to deal with the moves made by each player after a turn
+     @return an integer that contains the index of the winning player for the turn
+     */
     public int processMoves() {
         Card leadCard = listOfPlayers.get(nextTurn).playedCards.get(0);
         Card chaseCard = listOfPlayers.get((0 == nextTurn) ? 1 : 0).playedCards.get(0);
@@ -125,11 +146,20 @@ public class Round {
         return nextTurn;
     }
 
+    /*returns the index of the next player*/
     public int getNextPlayer() {
         return nextTurn;
     }
 
+
+    /**
+     play, function that processes a move made by a player
+     @param cardID, an integer that contains the ID of the card chosen by the player
+     @param listOfLogs, an arraylist of string used to display logs
+     */
     public void play(Integer cardID, ArrayList<String> listOfLogs) {
+
+        //make move for a player
         listOfPlayers.get(nextTurn).makeMove(cardID, listOfPlayers.get((nextTurn == 0)?1:0).getPlayedCards(),trumpCard);
 
         //only move is allowed, no meld
@@ -145,23 +175,28 @@ public class Round {
         //process played cards, in meld maps, and collections
         listOfPlayers.get(nextTurn).processPlayedCards();
 
-        isTurnComplete = !isTurnComplete;
 
+        isTurnComplete = !isTurnComplete;
         nextTurn = (nextTurn == 0)?1:0;
 
+        //if turn is complete
         if(isTurnComplete)
         {
-
+            //evaluate the winning player
             nextTurn = processMoves();
             listOfLogs.set((listOfLogs.size()-1), listOfLogs.get(listOfLogs.size()-1)+"\n"+
                     listOfPlayers.get(nextTurn).getPlayerName()+ " won the move");
 
+            //process the win
             processTurnWin();
 
             return;
         }
     }
 
+    /*
+    processTurnWin, process the played cards, scores, capture pile for the winning player of the turn
+     */
     private void processTurnWin() {
 
         //capturePile update
@@ -186,10 +221,16 @@ public class Round {
 
     }
 
+    /*return if the next activity is a move or a meld*/
     public boolean getMoveOrMeld() {
         return moveOrMeld;
     }
 
+    /**
+     makeMeld, function that processes a meld made by a user
+     @param selectedCard, a list of integer, which contains the ID of the cards chosen by the player.
+     @param listOfLogs, an arraylist of string used to display logs
+     */
     public void makeMeld(ArrayList<Integer> selectedCard, ArrayList<String> listOfLogs)
     {
         if(selectedCard.size()==0)
@@ -267,6 +308,11 @@ public class Round {
         return;
     }
 
+    /**
+     evaluateMeld, function that evaluates if and what meld a player has made
+     @param mergedCards, list of cards chosen by a player
+     @return an integer with the possible meld for a player
+     */
     private int evaluateMeld(ArrayList<Card> mergedCards) {
         //variable to store the index of the possible meld
         int possibleMeld = 0;
@@ -431,18 +477,27 @@ public class Round {
         }
     }
 
+    /*end of turn and draw cards*/
     public void drawCards() {
         moveOrMeld =true;
         dealCardsFromDeck(listOfPlayers.get(nextTurn), 1);
         dealCardsFromDeck(listOfPlayers.get((nextTurn==0)?1:0), 1);
     }
 
+    /**
+     getPlayerMeldHelp, function to give recommendation of a meld to the human player
+     @param listOfLogs, a list of string used to display logs
+     */
     public void getPlayerMeldHelp(ArrayList<String> listOfLogs) {
         ArrayList<Integer> selectedCardID= new ArrayList<Integer>();
         listOfPlayers.get(nextTurn).decideMeld(selectedCardID, trumpCard, listOfLogs);
 
     }
 
+    /**
+     getPlayerMove, function to give recommendation of a move to the human player
+     @param listOfLogs, a list of string used to display logs
+     */
     public void getPlayerMove(ArrayList<String> listOfLogs) {
         //lead
         if (listOfPlayers.get((nextTurn==0?1:0)).playedCards.size() == 0) {

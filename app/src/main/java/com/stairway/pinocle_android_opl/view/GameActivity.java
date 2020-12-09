@@ -29,6 +29,7 @@ import java.util.function.BiConsumer;
 
 public class GameActivity extends AppCompatActivity {
 
+    //member variable declarations
     private int cardname;
     private Game game;
     private ArrayList<Integer> selectedCard;
@@ -49,15 +50,13 @@ public class GameActivity extends AppCompatActivity {
         String filename;
         listOfLogs = new ArrayList<>();
 
-
-
         moveOrMeld = true;
         isChasePlayer =false;
 
         numberOfCards = 1;
         playerTurn = 0;
 
-
+        //evaluate the type of game that needs to be created based on the intent
         if(gameType.equals("new")) {
             startPlayer = intent.getExtras().getString("turn");
             game = new Game((startPlayer.equals("human"))?0:1);
@@ -85,20 +84,26 @@ public class GameActivity extends AppCompatActivity {
 
 
         //-------------------------Button onclick listeners------------------------------
+        /*
+        onclick listeners for the game activity
+         */
         //make move button
         Button moveButton = findViewById(R.id.moveButton);
 
         moveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                //if player is human and no cards selected
                 if (game.getListOfPlayers().get(game.getNextPlayer()).getPlayerName().equals("Human") && selectedCard.isEmpty()) {
                     makeToast("You have not selected a card yet.");
                 }
+                //if player is computer
                 else if(game.getListOfPlayers().get(game.getNextPlayer()).getPlayerName().equals("Computer"))
                 {
                     game.play(1111, listOfLogs);
                     refreshView();
                 }
+                //if player is human
                 else {
                     game.play(selectedCard.get(0), listOfLogs);
                     //refresh
@@ -112,14 +117,17 @@ public class GameActivity extends AppCompatActivity {
         meldButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                //if player is human and no cards selected
                 if (game.getListOfPlayers().get(game.getNextPlayer()).getPlayerName().equals("Human") && selectedCard.isEmpty()) {
                     makeToast("You have not selected a card yet.");
                 }
+                //if player is computer
                 else if(game.getListOfPlayers().get(game.getNextPlayer()).getPlayerName().equals("Computer"))
                 {
                     game.makeMeld(new ArrayList<Integer>(), listOfLogs);
                     refreshView();
                 }
+                //if player is human
                 else {
                     game.makeMeld(selectedCard, listOfLogs);
 
@@ -171,7 +179,10 @@ public class GameActivity extends AppCompatActivity {
         quitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                game.saveState();
+                Intent it = new Intent(GameActivity.this, endGame.class);
+                it.putExtra("Human", Integer.toString(game.getListOfPlayers().get(0).getTotalScore()));
+                it.putExtra("Computer", Integer.toString(game.getListOfPlayers().get(0).getTotalScore()));
+                startActivity(it);
             }
         });
 
@@ -257,6 +268,7 @@ public class GameActivity extends AppCompatActivity {
         //clear view variables
         selectedCard.clear();
 
+        //add cards to player views
         for(Player each : listOfPlayer)
         {
             if(each.getPlayerName() == "Human")
@@ -278,11 +290,7 @@ public class GameActivity extends AppCompatActivity {
 
             //for the desk
             addCardsToView(each.getPlayedCards(), deskLayout);
-           // if(each.getPlayedCards().size()!=0)
-            //{
-            //    String tempLog = each.getPlayerName()+" chose "+ each.getPlayedCards().get(0).getCardFace()+each.getPlayedCards().get(0).getCardSuit()
-           //     if(listOfLogs.)
-           // }
+
         }
 
         //updating the deck of cards
@@ -299,6 +307,7 @@ public class GameActivity extends AppCompatActivity {
         TextView nextPlayerview = findViewById(R.id.nextPlayerTextView);
         nextPlayerview.setText("Next Player: "+game.getListOfPlayers().get(game.getNextPlayer()).getPlayerName());
 
+        //visibilty for the helpButton
         if(game.getListOfPlayers().get(game.getNextPlayer()).getPlayerName().equals("Computer"))
         {
             helpButton.setVisibility(View.GONE);
@@ -358,11 +367,16 @@ public class GameActivity extends AppCompatActivity {
 
     }
 
+
+    /**
+     addCardsToMeldView, function that adds views to the meld pile, including duplicate cards
+     @param each, a player object whose melds need to be added to the view
+     @param meldView, a linearLayout where the view should be added
+     */
     @SuppressLint("ResourceType")
     private void addCardsToMeldView(Player each, LinearLayout meldView) {
         Map<Card, ArrayList<Integer>> mp = each.getMeldToCardMap();
-        System.out.println("Size of meld to card map of human is");
-        System.out.println(each.getMeldToCardMap().size());
+
         Iterator it = mp.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry im = (Map.Entry)it.next();
@@ -454,18 +468,18 @@ public class GameActivity extends AppCompatActivity {
                 meldView.addView(lineImage);
             }
 
-
-
-            //it.remove(); // avoids a ConcurrentModificationException
         }
-        System.out.println("After processing Size of meld to card map of human is");
-        System.out.println(each.getMeldToCardMap().size());
     }
 
     public void makeToast(String tst) {
         Toast.makeText(getApplicationContext(), tst, Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     addCardsToMeldView, function that adds views to provided layout, not clickable
+     @param cardsToAdd, a list of card objects that need to be added to the view
+     @param viewToAdd, a linearLayout where the view should be added
+     */
     public void addCardsToView( ArrayList<Card> cardsToAdd, LinearLayout viewToAdd)
     {
         for(final Card singleCard: cardsToAdd)
@@ -489,6 +503,11 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     addCardsToMeldView, function that adds views to provided layout, clickable
+     @param cardsToAdd, a list of card objects that need to be added to the view
+     @param viewToAdd, a linearLayout where the view should be added
+     */
     public void addCardsToClickableView( ArrayList<Card> cardsToAdd, LinearLayout viewToAdd)
     {
 

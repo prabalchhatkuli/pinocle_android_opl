@@ -7,12 +7,16 @@ import java.util.Collections;
 
 public class Deck {
 
-    //class variables
+    //class constants for the deck initalizations
     final char[] FACES = new char[]{ '9', 'J', 'Q', 'K', 'X', 'A' };
     final char[] SUITS = new char[]{'H','S','C','D'};
 
+    //list to store all current cards in the deck
     private ArrayList<Card> listOfCards;
 
+    /**
+     default constructor for a deck
+     */
     public Deck()
     {
         //counter for card ID
@@ -35,14 +39,24 @@ public class Deck {
         }
     }
 
+    /**
+     * numberOfCards function
+     * @return an integer, which contains the number of remaining cards in the list
+     */
     public int numberOfCards() { return listOfCards.size(); }
 
+    /**
+     shuffleDeck, randomly shuffles the list of cards
+     */
     public void shuffleDeck()
     {
         //shuffle the list of cards
         Collections.shuffle(listOfCards);
     }
 
+    /**
+     displayDeck, displays an ascii outout in the system log, used for debugging purposes
+     */
     public void displayDeck()
     {
         for (int i=0; i<listOfCards.size(); i++)
@@ -53,6 +67,10 @@ public class Deck {
         }
     }
 
+    /**
+     dealCard, deals a card to a user
+     @return a card object, the topmost card in the deck.
+     */
     public Card dealCard()
     {
         if (0 == listOfCards.size())
@@ -69,18 +87,32 @@ public class Deck {
         return topCard;
     }
 
+    /**
+     * getDeckSize function
+     * @return an integer, which contains the number of remaining cards in the list
+     */
     public  int getDeckSize()
     {
         return listOfCards.size();
     }
 
 
+    /**
+     getCards, get the entire deck
+     @return an arraylist of cards, which is the entire list of cards.
+     */
     public ArrayList<Card> getCards() {
         return listOfCards;
     }
 
+    /**
+     setDeck, sets a deck based on a list
+     @param vectorOfCards, an arraylist contains a list of cards to set to the deck.
+     */
     public void setDeck(ArrayList<Card> vectorOfCards) {
+        //clear the existing list
         listOfCards.clear();
+        //add to the empty list
         listOfCards.addAll(vectorOfCards);
     }
 }
